@@ -5,6 +5,7 @@ import {
   Users, 
   Mail, 
   PieChart, 
+  Settings,
   ArrowLeft,
   ChevronDown,
   ChevronRight,
@@ -29,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
     { name: 'Contacts', path: '/contacts', icon: <Users className="h-5 w-5" /> },
     { name: 'Reports', path: '/reports', icon: <PieChart className="h-5 w-5" /> },
     { name: 'Email', path: '/emails', icon: <Mail className="h-5 w-5" /> },
+    { name: 'Settings', path: '/settings', icon: <Settings className="h-5 w-5" /> },
   ];
   
   const viewsMenu = [
