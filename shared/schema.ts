@@ -18,6 +18,7 @@ export const contacts = pgTable("contacts", {
   source: text("source"),
   status: text("status").default("active"),
   tags: text("tags").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
   lastContactedAt: timestamp("last_contacted_at"),
   customFields: jsonb("custom_fields"),
 });

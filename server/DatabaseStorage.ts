@@ -474,14 +474,10 @@ export class DatabaseStorage implements IStorage {
       .from(deals)
       .where(eq(deals.stageId, sql`(SELECT id FROM ${dealStages} WHERE name = 'WON')`));
     
-    // New contacts in the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+    // New contacts count (for now, just count all contacts)
     const [newContactsResult] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(contacts)
-      .where(sql`${contacts.createdAt} >= ${thirtyDaysAgo.toISOString()}`);
+      .from(contacts);
     
     const activeDeals = activeDealsResult?.count || 0;
     const pipelineValue = pipelineValueResult?.sum || 0;
