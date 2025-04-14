@@ -120,7 +120,7 @@ export default function ImportData() {
       <CardHeader>
         <CardTitle className="text-2xl">Data Import</CardTitle>
         <CardDescription>
-          Import your data from CSV files exported from Streak
+          Import your CRM data from CSV files
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -179,8 +179,8 @@ export default function ImportData() {
                     <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
                     <div className="mt-2 text-sm text-amber-700">
                       <ul className="list-disc space-y-1 pl-5">
-                        <li>Use the Contacts CSV file from your Streak export</li>
-                        <li>Make sure your CSV includes Name, Email, Phone, Company, and other contact fields</li>
+                        <li>Use the Contacts CSV file from your CRM export</li>
+                        <li>Make sure your CSV includes First Name, Last Name, Email Addresses, and other contact fields</li>
                         <li>Recommended to import contacts before deals</li>
                       </ul>
                     </div>
@@ -193,7 +193,7 @@ export default function ImportData() {
           <TabsContent value="deals">
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="dealsFile">Deals (Boxes) CSV file</Label>
+                <Label htmlFor="dealsFile">Deals CSV file</Label>
                 <div className="flex gap-4 items-end">
                   <div className="flex-1">
                     <Input 
@@ -239,8 +239,8 @@ export default function ImportData() {
                     <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
                     <div className="mt-2 text-sm text-amber-700">
                       <ul className="list-disc space-y-1 pl-5">
-                        <li>Use the Boxes CSV file from your Streak export</li>
-                        <li>Make sure your CSV includes Box Name, Stage, Value, and other deal fields</li>
+                        <li>Use the Deals CSV file from your CRM export</li>
+                        <li>Make sure your CSV includes Name, Stage, Value, and other deal fields</li>
                         <li>Import contacts first to ensure deals are connected to contacts</li>
                       </ul>
                     </div>

@@ -4,9 +4,10 @@ import { contacts, deals, dealStages, InsertContact, InsertDeal } from '../share
 import { db } from './db';
 import path from 'path';
 
-// Process the contacts CSV file (Streak Export - Contacts)
+// Process the contacts CSV file (Export - Contacts)
 export async function importContactsFromCSV(filePath: string, userId: number): Promise<number> {
   try {
+    console.log('Importing contacts from:', filePath);
     const csvContent = readFileSync(filePath, 'utf8');
     const records = await parseCSV(csvContent);
     
@@ -14,45 +15,106 @@ export async function importContactsFromCSV(filePath: string, userId: number): P
       throw new Error('No valid contact records found in CSV file');
     }
     
+    console.log('Found records:', records.length);
+    console.log('Sample record:', JSON.stringify(records[0], null, 2));
+    
     // Map CSV fields to our schema
     const contactsToInsert: InsertContact[] = records.map((record: any) => {
-      const name = record['Contact Name'] || '';
-      const [firstName, ...restName] = name.split(' ');
-      const lastName = restName.join(' ');
+      // Extract name components
+      const firstName = record['First Name'] || '';
+      const lastName = record['Last Name'] || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      // Extract email address - it's in "Email Addresses" field
+      let email = '';
+      if (record['Email Addresses']) {
+        email = record['Email Addresses'];
+      }
+      
+      // Extract phone number - it's in "Phone Numbers" field
+      let phone = '';
+      if (record['Phone Numbers']) {
+        phone = record['Phone Numbers'];
+      }
+      
+      // Extract company from Box Name
+      const company = record['Box Name'] || '';
+      
+      // Extract position from Title
+      const position = record['Title'] || '';
+      
+      // Extract address components
+      let address = '';
+      let city = '';
+      let state = '';
+      let country = '';
+      
+      if (record['Addresses']) {
+        address = record['Addresses'];
+        
+        // Try to parse city, state, country from the address
+        const addressParts = address.split(',').map(part => part.trim());
+        if (addressParts.length >= 1) city = addressParts[0];
+        if (addressParts.length >= 2) state = addressParts[1];
+        if (addressParts.length >= 3) country = addressParts[2];
+      }
+      
+      // Extract LinkedIn
+      let linkedIn = '';
+      if (record['LinkedIn']) {
+        linkedIn = record['LinkedIn'];
+      }
       
       return {
-        name: name || 'Unknown',
+        name: fullName || 'Unknown',
         firstName: firstName || '',
         lastName: lastName || '',
-        email: record['Email'] || '',
-        phone: record['Phone'] || '',
-        company: record['Organization'] || record['Box Name'] || 'Unknown Company',
-        position: record['Title'] || '',
-        notes: record['Notes'] || '',
-        linkedIn: record['LinkedIn'] || '',
-        city: record['City'] || '',
-        state: record['State'] || '',
-        country: record['Country'] || '',
-        address: [record['City'], record['State'], record['Country']].filter(Boolean).join(', '),
-        source: record['Source'] || '',
-        boxKey: record['Key'] || '',
-        customFields: record['Custom Fields'] ? JSON.parse(record['Custom Fields']) : {},
-        tags: record['Tags'] ? record['Tags'].split(',').map((tag: string) => tag.trim()) : [],
+        email: email || '',
+        phone: phone || '',
+        company: company || 'Unknown Company',
+        position: position || '',
+        notes: record['Other'] || '',
+        linkedIn: linkedIn || '',
+        city: city || '',
+        state: state || '',
+        country: country || '',
+        address: address || '',
+        source: 'Import',
+        boxKey: record['Box Key'] || record['Key'] || '',
+        customFields: {},
+        tags: [],
+        userId: userId
       };
     });
     
-    // Insert contacts
-    const result = await db.insert(contacts).values(contactsToInsert);
-    return contactsToInsert.length;
+    console.log(`Prepared ${contactsToInsert.length} contacts for import`);
+    
+    // Insert contacts in batches to avoid database limitations
+    const batchSize = 100;
+    let successCount = 0;
+    
+    for (let i = 0; i < contactsToInsert.length; i += batchSize) {
+      const batch = contactsToInsert.slice(i, i + batchSize);
+      try {
+        await db.insert(contacts).values(batch);
+        successCount += batch.length;
+        console.log(`Imported batch ${i / batchSize + 1}: ${batch.length} contacts`);
+      } catch (error) {
+        console.error(`Error importing batch ${i / batchSize + 1}:`, error);
+      }
+    }
+    
+    return successCount;
   } catch (error) {
     console.error('Error importing contacts:', error);
     throw error;
   }
 }
 
-// Process the boxes CSV file (Streak Export - Boxes)
+// Process the boxes CSV file (Export - Boxes)
 export async function importDealsFromCSV(filePath: string, userId: number): Promise<number> {
   try {
+    console.log('Importing deals from:', filePath);
     const csvContent = readFileSync(filePath, 'utf8');
     const records = await parseCSV(csvContent);
     
@@ -60,8 +122,8 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       throw new Error('No valid deal records found in CSV file');
     }
     
-    // Get all contacts to link them to deals
-    const contactsData = await db.select().from(contacts);
+    console.log('Found records:', records.length);
+    console.log('Sample record:', JSON.stringify(records[0], null, 2));
     
     // Get all stages to link them to deals
     const stagesData = await db.select().from(dealStages);
@@ -70,7 +132,14 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       stageMap.set(stage.name.toLowerCase(), stage.id);
     });
     
-    // Map stage names from Streak to our stages
+    // Ensure we have a default contact
+    let defaultContactId = 1; // Fallback
+    const defaultContact = await db.select().from(contacts).limit(1);
+    if (defaultContact && defaultContact.length > 0) {
+      defaultContactId = defaultContact[0].id;
+    }
+    
+    // Map stage names to our stages
     const mapStageId = (stageName: string) => {
       if (!stageName) return 1; // Default to first stage
       const lowerStageName = stageName.toLowerCase();
@@ -84,7 +153,7 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       if (lowerStageName.includes('lead')) return stageMap.get('lead') || 1;
       if (lowerStageName.includes('contact')) return stageMap.get('contacted') || 1;
       if (lowerStageName.includes('recommend')) return stageMap.get('recommend by qc') || 1;
-      if (lowerStageName.includes('schedule')) return stageMap.get('call scheduled') || 1;
+      if (lowerStageName.includes('call schedule')) return stageMap.get('call scheduled') || 1;
       if (lowerStageName.includes('connect')) return stageMap.get('connected') || 1;
       if (lowerStageName.includes('engage')) return stageMap.get('engaged') || 1;
       if (lowerStageName.includes('proposal')) return stageMap.get('proposal sent') || 1;
@@ -95,54 +164,101 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       return 1; // Default to first stage
     };
     
-    // Helper to find a contact by name or create a placeholder
-    const findContactId = (name: string): number => {
-      const contact = contactsData.find(c => c.name === name);
-      return contact ? contact.id : 1; // Use first contact if not found
+    // Function to parse date strings
+    const parseDate = (dateString: string): Date | undefined => {
+      if (!dateString) return undefined;
+      
+      try {
+        return new Date(dateString);
+      } catch (error) {
+        return undefined;
+      }
     };
+    
+    // Helper to map interest/fit levels
+    const mapLevel = (value: string): string => {
+      if (!value) return 'Medium';
+      const lowerValue = value.toLowerCase();
+      if (lowerValue.includes('high')) return 'High';
+      if (lowerValue.includes('med')) return 'Medium';
+      if (lowerValue.includes('low')) return 'Low';
+      return 'Medium';
+    };
+    
+    // Get company to contact mapping (to link deals to contacts)
+    const allContacts = await db.select().from(contacts);
+    const companyToContactMap = new Map();
+    allContacts.forEach(contact => {
+      if (contact.company) {
+        companyToContactMap.set(contact.company.toLowerCase(), contact.id);
+      }
+    });
     
     // Map CSV fields to our schema
     const dealsToInsert: InsertDeal[] = records
-      .filter((record: any) => record['Box Name']) // Ensure box name exists
+      .filter((record: any) => record['Name']) // Ensure name exists
       .map((record: any) => {
-        const contactName = record['Assigned to Contact'] || ''; 
-        const contactId = findContactId(contactName);
+        const companyName = record['Name'] || '';
         
-        // Map interest and fit to our schema format (Low, Medium, High)
-        const mapLevel = (value: string): string => {
-          if (!value) return 'Medium';
-          const lowerValue = value.toLowerCase();
-          if (lowerValue.includes('high') || lowerValue.includes('3')) return 'High';
-          if (lowerValue.includes('med') || lowerValue.includes('2')) return 'Medium';
-          if (lowerValue.includes('low') || lowerValue.includes('1')) return 'Low';
-          return 'Medium';
-        };
+        // Try to find a contact by matching company name
+        let contactId = defaultContactId;
+        if (companyName && companyToContactMap.has(companyName.toLowerCase())) {
+          contactId = companyToContactMap.get(companyName.toLowerCase());
+        }
+        
+        // Get date of last contact
+        let lastContactedAt: Date | undefined;
+        if (record['Date of Last Email']) {
+          lastContactedAt = parseDate(record['Date of Last Email']);
+        }
+        
+        // Try to parse the value if it exists
+        let dealValue = 0;
+        if (record['Value'] && !isNaN(parseFloat(record['Value']))) {
+          dealValue = parseFloat(record['Value']);
+        }
         
         return {
-          name: record['Box Name'] || 'Unknown Deal',
+          name: companyName || 'Unknown Deal',
           contactId,
           stageId: mapStageId(record['Stage']),
-          value: parseFloat(record['Value'] || '0') || 0,
-          description: record['Description'] || '',
+          value: dealValue,
+          description: '',
           notes: record['Notes'] || '',
-          done: record['Done'] === 'true' || record['Done'] === 'yes' || false,
+          done: record['Done'] === 'Checked' || false,
           nextSteps: record['Next Steps'] || '',
-          thread: record['Thread URL'] || '',
-          lastContactedAt: record['Last Contacted Date'] ? new Date(record['Last Contacted Date']) : undefined,
+          thread: record['Thread'] || '',
+          lastContactedAt,
           interest: mapLevel(record['Interest']),
           fit: mapLevel(record['Fit']),
           type: record['Type'] || '',
           persona: record['Persona'] || '',
-          boxKey: record['Key'] || '',
+          boxKey: record['Box Key'] || '',
           source: record['Source'] || '',
-          tags: record['Tags'] ? record['Tags'].split(',').map((tag: string) => tag.trim()) : [],
-          customFields: record['Custom Fields'] ? JSON.parse(record['Custom Fields']) : {},
+          tags: [],
+          customFields: {},
+          userId: userId
         };
       });
     
-    // Insert deals
-    const result = await db.insert(deals).values(dealsToInsert);
-    return dealsToInsert.length;
+    console.log(`Prepared ${dealsToInsert.length} deals for import`);
+    
+    // Insert deals in batches
+    const batchSize = 100;
+    let successCount = 0;
+    
+    for (let i = 0; i < dealsToInsert.length; i += batchSize) {
+      const batch = dealsToInsert.slice(i, i + batchSize);
+      try {
+        await db.insert(deals).values(batch);
+        successCount += batch.length;
+        console.log(`Imported batch ${i / batchSize + 1}: ${batch.length} deals`);
+      } catch (error) {
+        console.error(`Error importing batch ${i / batchSize + 1}:`, error);
+      }
+    }
+    
+    return successCount;
   } catch (error) {
     console.error('Error importing deals:', error);
     throw error;
