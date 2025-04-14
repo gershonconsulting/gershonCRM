@@ -499,7 +499,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error importing contacts:', error);
-      res.status(500).json({ message: 'Failed to import contacts', error: error.message });
+      // Create a more detailed error response
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      
+      res.status(500).json({ 
+        message: 'Failed to import contacts', 
+        error: errorMessage,
+        details: errorStack,
+        fileReceived: req.file ? true : false,
+        fileName: req.file ? req.file.originalname : 'No file',
+        fileSize: req.file ? req.file.size : 0
+      });
     }
   });
   
@@ -523,7 +534,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error importing deals:', error);
-      res.status(500).json({ message: 'Failed to import deals', error: error.message });
+      // Create a more detailed error response
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      
+      res.status(500).json({ 
+        message: 'Failed to import deals', 
+        error: errorMessage,
+        details: errorStack,
+        fileReceived: req.file ? true : false,
+        fileName: req.file ? req.file.originalname : 'No file',
+        fileSize: req.file ? req.file.size : 0
+      });
     }
   });
   
@@ -677,7 +699,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error("Import error:", error);
-      res.status(500).json({ message: "Failed to import data", error: String(error) });
+      // Create a more detailed error response
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      
+      res.status(500).json({ 
+        message: "Failed to import data", 
+        error: errorMessage,
+        details: errorStack,
+        boxesDataReceived: !!req.body.boxesData,
+        contactsDataReceived: !!req.body.contactsData,
+        boxesDataSize: req.body.boxesData ? req.body.boxesData.length : 0,
+        contactsDataSize: req.body.contactsData ? req.body.contactsData.length : 0
+      });
     }
   });
 

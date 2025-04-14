@@ -185,12 +185,21 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       return 'Medium';
     };
     
-    // Get company to contact mapping (to link deals to contacts)
+    // Get contact mapping (to link deals to contacts)
+    // We'll search by both Box Key and Company name
     const allContacts = await db.select().from(contacts);
     const companyToContactMap = new Map();
+    const boxKeyToContactMap = new Map();
+    
     allContacts.forEach(contact => {
+      // Map by company name
       if (contact.company) {
         companyToContactMap.set(contact.company.toLowerCase(), contact.id);
+      }
+      
+      // Map by Box Key - this is our primary joining method
+      if (contact.boxKey) {
+        boxKeyToContactMap.set(contact.boxKey, contact.id);
       }
     });
     
@@ -200,10 +209,19 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
       .map((record: any) => {
         const companyName = record['Name'] || '';
         
-        // Try to find a contact by matching company name
+        // Try to find a contact by Box Key first (primary join method)
         let contactId = defaultContactId;
-        if (companyName && companyToContactMap.has(companyName.toLowerCase())) {
+        const boxKey = record['Box Key'] || '';
+        
+        if (boxKey && boxKeyToContactMap.has(boxKey)) {
+          // Box Key match found - this is the most reliable method
+          contactId = boxKeyToContactMap.get(boxKey);
+          console.log(`Matched deal ${companyName} to contact by Box Key: ${boxKey}`);
+        } 
+        // Fall back to company name matching
+        else if (companyName && companyToContactMap.has(companyName.toLowerCase())) {
           contactId = companyToContactMap.get(companyName.toLowerCase());
+          console.log(`Matched deal ${companyName} to contact by company name`);
         }
         
         // Get date of last contact
