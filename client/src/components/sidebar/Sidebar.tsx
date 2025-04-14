@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { 
   LayoutDashboard, 
   Users, 
-  DollarSign, 
   Mail, 
-  CheckSquare, 
-  Calendar, 
   PieChart, 
-  ArrowLeft 
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  HeartHandshake,
+  Star,
+  Clock
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -20,15 +22,19 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSidebar }) => {
   const [location] = useLocation();
+  const [viewsOpen, setViewsOpen] = useState(false);
 
-  const menu = [
+  const mainMenu = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: 'Contacts', path: '/contacts', icon: <Users className="h-5 w-5" /> },
-    { name: 'Deals', path: '/deals', icon: <DollarSign className="h-5 w-5" /> },
-    { name: 'Email', path: '/emails', icon: <Mail className="h-5 w-5" /> },
-    { name: 'Tasks', path: '/tasks', icon: <CheckSquare className="h-5 w-5" /> },
-    { name: 'Calendar', path: '/calendar', icon: <Calendar className="h-5 w-5" /> },
     { name: 'Reports', path: '/reports', icon: <PieChart className="h-5 w-5" /> },
+    { name: 'Email', path: '/emails', icon: <Mail className="h-5 w-5" /> },
+  ];
+  
+  const viewsMenu = [
+    { name: 'By Fit', path: '/views/by-fit', icon: <HeartHandshake className="h-5 w-5" /> },
+    { name: 'By Interest', path: '/views/by-interest', icon: <Star className="h-5 w-5" /> },
+    { name: 'By Week', path: '/views/by-week', icon: <Clock className="h-5 w-5" /> },
   ];
 
   const handleLinkClick = () => {
@@ -54,7 +60,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
       
       <div className="flex flex-col flex-grow px-4 pt-5 pb-4 overflow-y-auto">
         <nav className="flex-1 space-y-1">
-          {menu.map((item) => {
+          {/* Main menu items */}
+          {mainMenu.map((item) => {
             const isActive = location === item.path;
             return (
               <Link 
@@ -73,6 +80,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
               </Link>
             );
           })}
+          
+          {/* Views section with dropdown */}
+          <div className="pt-2">
+            <button
+              onClick={() => isOpen && setViewsOpen(!viewsOpen)}
+              className={`w-full flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md
+                ${location.startsWith('/views') 
+                  ? 'text-primary'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`
+              }
+            >
+              <div className="flex items-center">
+                <div className="mr-3">
+                  <PieChart className="h-5 w-5" />
+                </div>
+                {isOpen && <span>Views</span>}
+              </div>
+              {isOpen && (
+                <div className="text-gray-400">
+                  {viewsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </div>
+              )}
+            </button>
+            
+            {/* Views submenu */}
+            {isOpen && viewsOpen && (
+              <div className="ml-4 mt-1 space-y-1">
+                {viewsMenu.map((item) => {
+                  const isActive = location === item.path;
+                  return (
+                    <Link 
+                      key={item.path}
+                      href={item.path}
+                      onClick={handleLinkClick}
+                      className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group
+                        ${isActive 
+                          ? 'text-white bg-primary' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }`
+                      }
+                    >
+                      <div className="mr-3">{item.icon}</div>
+                      {isOpen && <span>{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
       
