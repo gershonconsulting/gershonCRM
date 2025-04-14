@@ -1,6 +1,28 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, date, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, date, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Users schema for authentication
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  password: text("password").notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  role: text("role").default("user"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastLogin: timestamp("last_login"),
+  company: text("company"),
+  position: text("position"),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  lastLogin: true,
+});
 
 // Contact schema based on MAbSilico's Streak data
 export const contacts = pgTable("contacts", {
@@ -132,6 +154,9 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 });
 
 // Type definitions
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = z.infer<typeof insertContactSchema>;
 

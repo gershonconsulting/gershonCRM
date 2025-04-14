@@ -13,6 +13,10 @@ import {
   InsertDealStage
 } from "@shared/schema";
 import { parse } from 'csv-parse/sync';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { importContactsFromCSV, importDealsFromCSV } from './import-utils';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
