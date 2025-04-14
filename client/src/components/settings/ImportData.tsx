@@ -1,171 +1,252 @@
-import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { Loader2, Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { queryClient } from '@/lib/queryClient';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export default function ImportData() {
   const { toast } = useToast();
-  const [boxesFile, setBoxesFile] = useState<File | null>(null);
+  const contactsFileRef = useRef<HTMLInputElement>(null);
+  const dealsFileRef = useRef<HTMLInputElement>(null);
   const [contactsFile, setContactsFile] = useState<File | null>(null);
-  const [importStats, setImportStats] = useState<{
-    stages: number;
-    contacts: number;
-    deals: number;
-  } | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importStatus, setImportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [dealsFile, setDealsFile] = useState<File | null>(null);
 
-  const handleBoxesFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setBoxesFile(e.target.files[0]);
-    }
-  };
-
-  const handleContactsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setContactsFile(e.target.files[0]);
-    }
-  };
-
-  const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!boxesFile || !contactsFile) {
-        throw new Error('Please select both boxes and contacts CSV files');
-      }
-
-      // Read the files
-      const boxesData = await boxesFile.text();
-      const contactsData = await contactsFile.text();
-
-      // Send to server
-      const response = await apiRequest('/api/import/streak-data', {
-        method: 'POST',
-        body: JSON.stringify({ boxesData, contactsData }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+  // Import contacts mutation
+  const importContactsMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiRequest('POST', '/api/import/contacts', formData, false);
       return await response.json();
     },
-    onMutate: () => {
-      setImportStatus('loading');
-      setImportError(null);
-      setImportStats(null);
-    },
     onSuccess: (data) => {
-      setImportStatus('success');
-      setImportStats(data.stats);
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/deal-stages'] });
       toast({
-        title: 'Import Successful',
-        description: `Imported ${data.stats.deals} deals, ${data.stats.contacts} contacts, and ${data.stats.stages} stages.`,
+        title: 'Contacts imported successfully',
+        description: `Imported ${data.count} contacts`,
+        variant: 'default',
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      setContactsFile(null);
+      if (contactsFileRef.current) {
+        contactsFileRef.current.value = '';
+      }
     },
     onError: (error: Error) => {
-      setImportStatus('error');
-      setImportError(error.message);
       toast({
-        title: 'Import Failed',
+        title: 'Import failed',
         description: error.message,
         variant: 'destructive',
       });
     },
   });
 
-  const handleImport = () => {
-    importMutation.mutate();
+  // Import deals mutation
+  const importDealsMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiRequest('POST', '/api/import/deals', formData, false);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Deals imported successfully',
+        description: `Imported ${data.count} deals`,
+        variant: 'default',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      setDealsFile(null);
+      if (dealsFileRef.current) {
+        dealsFileRef.current.value = '';
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Import failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleContactsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setContactsFile(e.target.files[0]);
+    }
+  };
+
+  const handleDealsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setDealsFile(e.target.files[0]);
+    }
+  };
+
+  const handleImportContacts = () => {
+    if (!contactsFile) {
+      toast({
+        title: 'No file selected',
+        description: 'Please select a CSV file to import',
+        variant: 'destructive',
+      });
+      return;
+    }
+    importContactsMutation.mutate(contactsFile);
+  };
+
+  const handleImportDeals = () => {
+    if (!dealsFile) {
+      toast({
+        title: 'No file selected',
+        description: 'Please select a CSV file to import',
+        variant: 'destructive',
+      });
+      return;
+    }
+    importDealsMutation.mutate(dealsFile);
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Import Data</CardTitle>
+        <CardTitle className="text-2xl">Data Import</CardTitle>
         <CardDescription>
-          Import your data from Streak CRM into this application
+          Import your data from CSV files exported from Streak
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="import">
-          <TabsList className="grid w-full grid-cols-1">
-            <TabsTrigger value="import">Streak Import</TabsTrigger>
+        <Tabs defaultValue="contacts">
+          <TabsList className="mb-6">
+            <TabsTrigger value="contacts">Import Contacts</TabsTrigger>
+            <TabsTrigger value="deals">Import Deals</TabsTrigger>
           </TabsList>
-          <TabsContent value="import" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="boxes-file">Boxes CSV File</Label>
-                <Input
-                  id="boxes-file"
-                  type="file"
-                  accept=".csv"
-                  onChange={handleBoxesFileChange}
-                  disabled={importStatus === 'loading'}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Upload the Streak Export Boxes CSV file
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="contacts-file">Contacts CSV File</Label>
-                <Input
-                  id="contacts-file"
-                  type="file"
-                  accept=".csv"
-                  onChange={handleContactsFileChange}
-                  disabled={importStatus === 'loading'}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Upload the Streak Export Contacts CSV file
-                </p>
-              </div>
 
-              {importStatus === 'loading' && (
-                <div className="py-4">
-                  <p className="mb-2">Importing data...</p>
-                  <Progress value={50} className="w-full" />
+          <TabsContent value="contacts">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="contactsFile">Contacts CSV file</Label>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Input 
+                      ref={contactsFileRef}
+                      id="contactsFile" 
+                      type="file" 
+                      accept=".csv" 
+                      onChange={handleContactsFile} 
+                      disabled={importContactsMutation.isPending}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleImportContacts} 
+                    disabled={!contactsFile || importContactsMutation.isPending}
+                  >
+                    {importContactsMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import Contacts
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
+                {contactsFile && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <FileText className="mr-2 h-4 w-4" />
+                    {contactsFile.name} ({Math.round(contactsFile.size / 1024)} KB)
+                  </div>
+                )}
+              </div>
+              
+              <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <ul className="list-disc space-y-1 pl-5">
+                        <li>Use the Contacts CSV file from your Streak export</li>
+                        <li>Make sure your CSV includes Name, Email, Phone, Company, and other contact fields</li>
+                        <li>Recommended to import contacts before deals</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
 
-              {importStatus === 'success' && importStats && (
-                <Alert variant="default" className="bg-green-50 border-green-200">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-800">Import Successful</AlertTitle>
-                  <AlertDescription className="text-green-700">
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Imported {importStats.stages} pipeline stages</li>
-                      <li>Imported {importStats.contacts} contacts</li>
-                      <li>Imported {importStats.deals} deals</li>
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {importStatus === 'error' && importError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Import Failed</AlertTitle>
-                  <AlertDescription>
-                    {importError}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <Button 
-                onClick={handleImport} 
-                disabled={!boxesFile || !contactsFile || importStatus === 'loading'}
-                className="w-full"
-              >
-                {importStatus === 'loading' ? 'Importing...' : 'Import Data'}
-              </Button>
+          <TabsContent value="deals">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="dealsFile">Deals (Boxes) CSV file</Label>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Input 
+                      ref={dealsFileRef}
+                      id="dealsFile" 
+                      type="file" 
+                      accept=".csv" 
+                      onChange={handleDealsFile} 
+                      disabled={importDealsMutation.isPending}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleImportDeals} 
+                    disabled={!dealsFile || importDealsMutation.isPending}
+                  >
+                    {importDealsMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import Deals
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {dealsFile && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <FileText className="mr-2 h-4 w-4" />
+                    {dealsFile.name} ({Math.round(dealsFile.size / 1024)} KB)
+                  </div>
+                )}
+              </div>
+              
+              <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <ul className="list-disc space-y-1 pl-5">
+                        <li>Use the Boxes CSV file from your Streak export</li>
+                        <li>Make sure your CSV includes Box Name, Stage, Value, and other deal fields</li>
+                        <li>Import contacts first to ensure deals are connected to contacts</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

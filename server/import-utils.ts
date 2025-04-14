@@ -1,6 +1,6 @@
 import { parse } from 'csv-parse';
 import { readFileSync } from 'fs';
-import { contacts, deals, InsertContact, InsertDeal } from '../shared/schema';
+import { contacts, deals, dealStages, InsertContact, InsertDeal } from '../shared/schema';
 import { db } from './db';
 import path from 'path';
 
