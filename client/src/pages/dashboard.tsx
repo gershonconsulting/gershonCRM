@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Plus } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import StatCard from '@/components/dashboard/StatCard';
-import TaskList from '@/components/tasks/TaskList';
 import ActivityFeed from '@/components/activity/ActivityFeed';
 import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
@@ -97,9 +96,8 @@ const Dashboard: React.FC = () => {
         {/* Pipeline View */}
         <PipelineView onNewDeal={() => setIsDealFormOpen(true)} />
 
-        {/* Upcoming Tasks & Recent Activity */}
-        <div className="mt-8 grid gap-5 grid-cols-1 lg:grid-cols-2">
-          <TaskList limit={3} />
+        {/* Recent Activity */}
+        <div className="mt-8">
           <ActivityFeed limit={4} />
         </div>
       </div>
