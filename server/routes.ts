@@ -16,7 +16,7 @@ import { parse } from 'csv-parse/sync';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { importContactsFromCSV, importDealsFromCSV } from './import-utils';
+import { importContactsFromCSV, importDealsFromCSV, importCombinedData } from './import-utils';
 
 // Configure multer for file uploads
 const storage_config = multer.diskStorage({
@@ -549,6 +549,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Combined import endpoint (both contacts and deals)
+  app.post(`${api}/import/combined`, upload.fields([
+    { name: 'contactsFile', maxCount: 1 },
+    { name: 'dealsFile', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      if (!files || !files.contactsFile || !files.dealsFile) {
+        return res.status(400).json({ 
+          message: 'Missing files. Both contacts and deals files are required.',
+          filesReceived: files ? Object.keys(files) : []
+        });
+      }
+      
+      const contactsFile = files.contactsFile[0];
+      const dealsFile = files.dealsFile[0];
+      
+      if (!contactsFile || !dealsFile) {
+        return res.status(400).json({ 
+          message: 'Missing required files',
+          contactsFile: contactsFile ? true : false,
+          dealsFile: dealsFile ? true : false
+        });
+      }
+      
+      // TODO: Get actual user ID from auth system
+      const userId = 1;
+      
+      console.log('Processing combined import:');
+      console.log('Contacts file:', contactsFile.originalname);
+      console.log('Deals file:', dealsFile.originalname);
+      
+      const result = await importCombinedData(contactsFile.path, dealsFile.path, userId);
+      
+      // Clean up the temporary files
+      fs.unlinkSync(contactsFile.path);
+      fs.unlinkSync(dealsFile.path);
+      
+      res.status(200).json({ 
+        message: `Successfully imported ${result.contacts} contacts and ${result.deals} deals`,
+        ...result
+      });
+    } catch (error) {
+      console.error('Error during combined import:', error);
+      // Create a more detailed error response
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      
+      res.status(500).json({ 
+        message: 'Failed to import data', 
+        error: errorMessage,
+        details: errorStack,
+        filesReceived: req.files ? Object.keys(req.files) : []
+      });
+    }
+  });
+  
   // Data Import Endpoints (JSON-based)
   app.post(`${api}/import/streak-data`, async (req, res) => {
     try {
@@ -571,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process and store stages first
       const stageMap = new Map();
-      const stageNames = [...new Set(boxesRecords.map((record: any) => record.Stage))];
+      const stageNames = Array.from(new Set(boxesRecords.map((record: any) => record.Stage)));
       
       // Create default colors for stages
       const stageColors = [

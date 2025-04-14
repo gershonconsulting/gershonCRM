@@ -283,6 +283,31 @@ export async function importDealsFromCSV(filePath: string, userId: number): Prom
   }
 }
 
+// Combined import function to process both contacts and deals together
+export async function importCombinedData(contactsFilePath: string, dealsFilePath: string, userId: number): Promise<{contacts: number, deals: number}> {
+  try {
+    console.log('Starting combined import process');
+    console.log('Contacts file:', contactsFilePath);
+    console.log('Deals file:', dealsFilePath);
+    
+    // First import contacts
+    const contactsCount = await importContactsFromCSV(contactsFilePath, userId);
+    console.log(`Successfully imported ${contactsCount} contacts`);
+    
+    // Then import deals (which will now be able to reference the newly imported contacts)
+    const dealsCount = await importDealsFromCSV(dealsFilePath, userId);
+    console.log(`Successfully imported ${dealsCount} deals`);
+    
+    return {
+      contacts: contactsCount,
+      deals: dealsCount
+    };
+  } catch (error) {
+    console.error('Error during combined import:', error);
+    throw error;
+  }
+}
+
 // Helper function to parse CSV content
 async function parseCSV(csvContent: string): Promise<any[]> {
   return new Promise((resolve, reject) => {

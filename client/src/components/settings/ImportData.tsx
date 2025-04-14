@@ -41,6 +41,16 @@ export default function ImportData() {
       return await response.json();
     },
     onSuccess: (data) => {
+      // Reset file inputs
+      if (combinedContactsFileRef.current) combinedContactsFileRef.current.value = '';
+      if (combinedDealsFileRef.current) combinedDealsFileRef.current.value = '';
+      setCombinedContactsFile(null);
+      setCombinedDealsFile(null);
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      
       toast({
         title: 'Data imported successfully',
         description: `Imported ${data.contacts} contacts and ${data.deals} deals`,
@@ -141,6 +151,40 @@ export default function ImportData() {
       setDealsFile(e.target.files[0]);
     }
   };
+  
+  const handleCombinedContactsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setCombinedContactsFile(e.target.files[0]);
+    }
+  };
+
+  const handleCombinedDealsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setCombinedDealsFile(e.target.files[0]);
+    }
+  };
+  
+  const handleCombinedImport = () => {
+    if (!combinedContactsFile) {
+      toast({
+        title: 'Missing contacts file',
+        description: 'Please select the Contacts CSV file',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!combinedDealsFile) {
+      toast({
+        title: 'Missing deals file',
+        description: 'Please select the Boxes CSV file',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    importCombinedMutation.mutate();
+  };
 
   const handleImportContacts = () => {
     if (!contactsFile) {
@@ -182,6 +226,100 @@ export default function ImportData() {
             <TabsTrigger value="deals">Import Deals</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="combined">
+            <div className="space-y-6">
+              <div className="p-4 mb-2 border border-green-200 bg-green-50 rounded-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <FileCheck className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-green-800">Recommended Import Method</h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      The combined import ensures proper linking between contacts and deals by processing both files together.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="combinedContactsFile">Contacts CSV File</Label>
+                  <Input 
+                    ref={combinedContactsFileRef}
+                    id="combinedContactsFile" 
+                    type="file" 
+                    accept=".csv" 
+                    onChange={handleCombinedContactsFile} 
+                    disabled={importCombinedMutation.isPending}
+                  />
+                  {combinedContactsFile && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <FileText className="mr-2 h-4 w-4" />
+                      {combinedContactsFile.name} ({Math.round(combinedContactsFile.size / 1024)} KB)
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="combinedDealsFile">Boxes/Deals CSV File</Label>
+                  <Input 
+                    ref={combinedDealsFileRef}
+                    id="combinedDealsFile" 
+                    type="file" 
+                    accept=".csv" 
+                    onChange={handleCombinedDealsFile} 
+                    disabled={importCombinedMutation.isPending}
+                  />
+                  {combinedDealsFile && (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <FileText className="mr-2 h-4 w-4" />
+                      {combinedDealsFile.name} ({Math.round(combinedDealsFile.size / 1024)} KB)
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleCombinedImport} 
+                disabled={!combinedContactsFile || !combinedDealsFile || importCombinedMutation.isPending}
+                className="w-full"
+              >
+                {importCombinedMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import Both Files
+                  </>
+                )}
+              </Button>
+              
+              <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">Combined Import Instructions</h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <ul className="list-disc space-y-1 pl-5">
+                        <li>Select <strong>both</strong> the Contacts CSV and Boxes/Deals CSV files</li>
+                        <li>The Box Key field must be present in both files to establish the relationship</li>
+                        <li>Combined import ensures proper linking between contacts and deals</li>
+                        <li>The system will first import contacts and then connect deals to those contacts</li>
+                        <li>Any deals without a matching contact will be skipped</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="contacts">
             <div className="space-y-6">
               <div className="space-y-2">
