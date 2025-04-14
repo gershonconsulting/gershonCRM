@@ -17,16 +17,16 @@ export class DatabaseStorage implements IStorage {
     if (existingStages.length === 0) {
       // Pipeline has these stages: Lead, Contacted, Reccommend By QC, Call Scheduled, Connected, Engaged, Proposal Sent, WON, Later Stage, Recycled
       const stagesToCreate = [
-        { name: "Lead", order: 1, color: "#e74c3c", probability: 0 },
-        { name: "Contacted", order: 2, color: "#e67e22", probability: 10 },
-        { name: "Reccommend By QC", order: 3, color: "#f39c12", probability: 20 },
-        { name: "Call Scheduled", order: 4, color: "#f1c40f", probability: 30 },
-        { name: "Connected", order: 5, color: "#2ecc71", probability: 40 },
-        { name: "Engaged", order: 6, color: "#27ae60", probability: 60 },
-        { name: "Proposal Sent", order: 7, color: "#3498db", probability: 80 },
-        { name: "WON", order: 8, color: "#2980b9", probability: 100 },
-        { name: "Later Stage", order: 9, color: "#8e44ad", probability: 50 },
-        { name: "Recycled", order: 10, color: "#95a5a6", probability: 0 }
+        { name: "Lead", order: 1, color: "#e74c3c", probability: 0, count: 0 },
+        { name: "Contacted", order: 2, color: "#e67e22", probability: 10, count: 0 },
+        { name: "Reccommend By QC", order: 3, color: "#f39c12", probability: 20, count: 0 },
+        { name: "Call Scheduled", order: 4, color: "#f1c40f", probability: 30, count: 0 },
+        { name: "Connected", order: 5, color: "#2ecc71", probability: 40, count: 0 },
+        { name: "Engaged", order: 6, color: "#27ae60", probability: 60, count: 0 },
+        { name: "Proposal Sent", order: 7, color: "#3498db", probability: 80, count: 0 },
+        { name: "WON", order: 8, color: "#2980b9", probability: 100, count: 0 },
+        { name: "Later Stage", order: 9, color: "#8e44ad", probability: 50, count: 0 },
+        { name: "Recycled", order: 10, color: "#95a5a6", probability: 0, count: 0 }
       ];
       
       for (const stage of stagesToCreate) {

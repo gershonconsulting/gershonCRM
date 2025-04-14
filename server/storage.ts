@@ -3,6 +3,7 @@ import {
   InsertContact, InsertDeal, InsertTask, InsertActivity, InsertDealStage,
   DealWithContact, TaskWithRelations, ActivityWithRelations,
 } from "@shared/schema";
+import { DatabaseStorage } from "./DatabaseStorage";
 
 export interface IStorage {
   // Contacts
@@ -463,4 +464,13 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Create a new DatabaseStorage instance
+const dbStorage = new DatabaseStorage();
+
+// Initialize deal stages based on the provided pipeline
+dbStorage.initializeDefaultStages()
+  .then(() => console.log('Default deal stages initialized'))
+  .catch(error => console.error('Error initializing default deal stages:', error));
+
+// Export the database storage instance
+export const storage = dbStorage;
