@@ -37,8 +37,14 @@ export default function ImportData() {
       formData.append('contactsFile', combinedContactsFile);
       formData.append('dealsFile', combinedDealsFile);
       
-      const response = await apiRequest('POST', '/api/import/combined', formData, false);
-      return await response.json();
+      try {
+        const response = await apiRequest('POST', '/api/import/combined', formData, false);
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Combined import error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       // Reset file inputs
@@ -87,8 +93,14 @@ export default function ImportData() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiRequest('POST', '/api/import/contacts', formData, false);
-      return await response.json();
+      try {
+        const response = await apiRequest('POST', '/api/import/contacts', formData, false);
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Contacts import error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -116,8 +128,14 @@ export default function ImportData() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiRequest('POST', '/api/import/deals', formData, false);
-      return await response.json();
+      try {
+        const response = await apiRequest('POST', '/api/import/deals', formData, false);
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Deals import error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({

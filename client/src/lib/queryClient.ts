@@ -2,10 +2,13 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Clone the response before reading to avoid stream already read errors
+    const resClone = res.clone();
+    
     // Try to parse as JSON first to get structured error details
     let errorText;
     try {
-      const errorJson = await res.json();
+      const errorJson = await resClone.json();
       // If we have a structured error response, format it nicely
       if (errorJson.error || errorJson.message) {
         const errorDetail = errorJson.error || errorJson.message;
@@ -17,7 +20,12 @@ async function throwIfResNotOk(res: Response) {
       }
     } catch (e) {
       // Not JSON, treat as plain text
-      errorText = await res.text() || res.statusText;
+      try {
+        errorText = await res.text() || res.statusText;
+      } catch (textError) {
+        // If we can't read the text either, fall back to status text
+        errorText = res.statusText || 'Unknown error';
+      }
     }
     
     throw new Error(`${res.status}: ${errorText}`);
@@ -54,9 +62,9 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export const getQueryFn: <TData>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
+}) => QueryFunction<TData> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
@@ -64,7 +72,7 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null as unknown as T;
+      return null as unknown as TData;
     }
 
     await throwIfResNotOk(res);

@@ -648,12 +648,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create stages in order
       for (let i = 0; i < stageNames.length; i++) {
         const stageName = stageNames[i];
+        const stageName2 = typeof stageName === 'string' ? stageName : String(stageName);
         const stageData: InsertDealStage = {
-          name: stageName,
+          name: stageName2,
           order: i + 1,
           color: stageColors[i % stageColors.length],
-          probability: stageName === "WON" ? 100 : Math.max(10, Math.min(90, (i + 1) * 10)),
-          count: boxesRecords.filter((r: any) => r.Stage === stageName).length
+          probability: stageName2 === "WON" ? 100 : Math.max(10, Math.min(90, (i + 1) * 10)),
+          count: boxesRecords.filter((r: any) => r.Stage === stageName2).length
         };
         
         try {
