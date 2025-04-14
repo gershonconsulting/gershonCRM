@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, date, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,11 +6,20 @@ import { z } from "zod";
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  email: text("email").notNull(),
+  email: text("email"),
   phone: text("phone"),
-  company: text("company"),
+  company: text("company").notNull(),
   position: text("position"),
   notes: text("notes"),
+  website: text("website"),
+  linkedIn: text("linked_in"),
+  address: text("address"),
+  industry: text("industry"),
+  source: text("source"),
+  status: text("status").default("active"),
+  tags: text("tags").array(),
+  lastContactedAt: timestamp("last_contacted_at"),
+  customFields: jsonb("custom_fields"),
 });
 
 export const insertContactSchema = createInsertSchema(contacts).pick({
@@ -20,15 +29,24 @@ export const insertContactSchema = createInsertSchema(contacts).pick({
   company: true,
   position: true,
   notes: true,
+  website: true,
+  linkedIn: true,
+  address: true,
+  industry: true,
+  source: true,
+  status: true,
+  tags: true,
+  customFields: true,
 });
 
-// Deal stages
+// Deal stages - Based on the provided pipeline image
 export const dealStages = pgTable("deal_stages", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   order: integer("order").notNull(),
   color: text("color").notNull(),
   probability: integer("probability").notNull(),
+  count: integer("count").default(0), // To track number of deals in this stage
 });
 
 export const insertDealStageSchema = createInsertSchema(dealStages).pick({
@@ -48,6 +66,13 @@ export const deals = pgTable("deals", {
   description: text("description"),
   nextSteps: text("next_steps"),
   createdAt: timestamp("created_at").notNull(),
+  lastContactedAt: timestamp("last_contacted_at"),
+  closedAt: timestamp("closed_at"),
+  expectedCloseDate: date("expected_close_date"),
+  probability: integer("probability"),
+  source: text("source"),
+  tags: text("tags").array(),
+  customFields: jsonb("custom_fields"),
 });
 
 export const insertDealSchema = createInsertSchema(deals).pick({
@@ -57,6 +82,11 @@ export const insertDealSchema = createInsertSchema(deals).pick({
   value: true,
   description: true,
   nextSteps: true,
+  expectedCloseDate: true,
+  probability: true,
+  source: true,
+  tags: true,
+  customFields: true,
 });
 
 // Tasks schema
