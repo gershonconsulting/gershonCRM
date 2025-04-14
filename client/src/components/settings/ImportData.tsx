@@ -9,7 +9,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, Check, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, FileText, AlertCircle, FileCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -18,8 +18,59 @@ export default function ImportData() {
   const { toast } = useToast();
   const contactsFileRef = useRef<HTMLInputElement>(null);
   const dealsFileRef = useRef<HTMLInputElement>(null);
+  const combinedContactsFileRef = useRef<HTMLInputElement>(null);
+  const combinedDealsFileRef = useRef<HTMLInputElement>(null);
+  
   const [contactsFile, setContactsFile] = useState<File | null>(null);
   const [dealsFile, setDealsFile] = useState<File | null>(null);
+  const [combinedContactsFile, setCombinedContactsFile] = useState<File | null>(null);
+  const [combinedDealsFile, setCombinedDealsFile] = useState<File | null>(null);
+
+  // Combined import mutation
+  const importCombinedMutation = useMutation({
+    mutationFn: async () => {
+      if (!combinedContactsFile || !combinedDealsFile) {
+        throw new Error("Both contacts and deals files are required");
+      }
+      
+      const formData = new FormData();
+      formData.append('contactsFile', combinedContactsFile);
+      formData.append('dealsFile', combinedDealsFile);
+      
+      const response = await apiRequest('POST', '/api/import/combined', formData, false);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Data imported successfully',
+        description: `Imported ${data.contacts} contacts and ${data.deals} deals`,
+        variant: 'default',
+      });
+      
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deal-stages'] });
+      
+      // Reset the form
+      setCombinedContactsFile(null);
+      setCombinedDealsFile(null);
+      if (combinedContactsFileRef.current) {
+        combinedContactsFileRef.current.value = '';
+      }
+      if (combinedDealsFileRef.current) {
+        combinedDealsFileRef.current.value = '';
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Import error:', error);
+      toast({
+        title: 'Import failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Import contacts mutation
   const importContactsMutation = useMutation({
@@ -124,8 +175,9 @@ export default function ImportData() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="contacts">
+        <Tabs defaultValue="combined">
           <TabsList className="mb-6">
+            <TabsTrigger value="combined">Combined Import</TabsTrigger>
             <TabsTrigger value="contacts">Import Contacts</TabsTrigger>
             <TabsTrigger value="deals">Import Deals</TabsTrigger>
           </TabsList>
@@ -179,9 +231,11 @@ export default function ImportData() {
                     <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
                     <div className="mt-2 text-sm text-amber-700">
                       <ul className="list-disc space-y-1 pl-5">
-                        <li>Use the Contacts CSV file from your CRM export</li>
-                        <li>Make sure your CSV includes First Name, Last Name, Email Addresses, and other contact fields</li>
-                        <li>Recommended to import contacts before deals</li>
+                        <li><strong>Important:</strong> Import contacts <strong>BEFORE</strong> deals</li>
+                        <li>Use the "Contacts" CSV file from your export</li>
+                        <li>Make sure your CSV includes First Name, Last Name, Email Addresses, and Box Key</li>
+                        <li>The Box Key field is critical as it links contacts with deals</li>
+                        <li>Each contact should have a unique Box Key value</li>
                       </ul>
                     </div>
                   </div>
@@ -239,9 +293,11 @@ export default function ImportData() {
                     <h3 className="text-sm font-medium text-amber-800">Import Instructions</h3>
                     <div className="mt-2 text-sm text-amber-700">
                       <ul className="list-disc space-y-1 pl-5">
-                        <li>Use the Deals CSV file from your CRM export</li>
-                        <li>Make sure your CSV includes Name, Stage, Value, and other deal fields</li>
-                        <li>Import contacts first to ensure deals are connected to contacts</li>
+                        <li><strong>Important:</strong> Import contacts <strong>BEFORE</strong> deals</li>
+                        <li>Use the "Boxes" CSV file from your export</li>
+                        <li>Make sure your CSV includes Name, Stage, Box Key, and other deal fields</li>
+                        <li>The Box Key field must match the Box Key in your contacts CSV</li>
+                        <li>Deals without a matching contact Box Key will not import correctly</li>
                       </ul>
                     </div>
                   </div>
