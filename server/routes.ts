@@ -478,7 +478,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Data Import Endpoints
+  // File Upload Endpoints
+  app.post(`${api}/import/contacts`, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      // TODO: Get actual user ID from auth system
+      const userId = 1;
+      
+      const count = await importContactsFromCSV(req.file.path, userId);
+      
+      // Clean up the temporary file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(200).json({ 
+        message: `Successfully imported ${count} contacts`,
+        count
+      });
+    } catch (error) {
+      console.error('Error importing contacts:', error);
+      res.status(500).json({ message: 'Failed to import contacts', error: error.message });
+    }
+  });
+  
+  app.post(`${api}/import/deals`, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      // TODO: Get actual user ID from auth system
+      const userId = 1;
+      
+      const count = await importDealsFromCSV(req.file.path, userId);
+      
+      // Clean up the temporary file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(200).json({ 
+        message: `Successfully imported ${count} deals`,
+        count
+      });
+    } catch (error) {
+      console.error('Error importing deals:', error);
+      res.status(500).json({ message: 'Failed to import deals', error: error.message });
+    }
+  });
+  
+  // Data Import Endpoints (JSON-based)
   app.post(`${api}/import/streak-data`, async (req, res) => {
     try {
       const { boxesData, contactsData } = req.body;
