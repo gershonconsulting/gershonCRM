@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
@@ -7,8 +7,12 @@ import {
   insertDealSchema, 
   insertTaskSchema, 
   insertActivitySchema,
-  insertDealStageSchema 
+  insertDealStageSchema,
+  InsertContact,
+  InsertDeal,
+  InsertDealStage
 } from "@shared/schema";
+import { parse } from 'csv-parse/sync';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -442,6 +446,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete activity" });
+    }
+  });
+
+  // Data Import Endpoints
+  app.post(`${api}/import/streak-data`, async (req, res) => {
+    try {
+      const { boxesData, contactsData } = req.body;
+      
+      if (!boxesData || !contactsData) {
+        return res.status(400).json({ message: "Missing required data" });
+      }
+
+      // Parse CSV data from request
+      const boxesRecords = parse(boxesData, {
+        columns: true,
+        skip_empty_lines: true
+      });
+      
+      const contactsRecords = parse(contactsData, {
+        columns: true,
+        skip_empty_lines: true
+      });
+
+      // Process and store stages first
+      const stageMap = new Map();
+      const stageNames = [...new Set(boxesRecords.map((record: any) => record.Stage))];
+      
+      // Create default colors for stages
+      const stageColors = [
+        "#FF5630", // Lead - red
+        "#FCA44C", // Contacted - orange
+        "#C054BE", // Recommend By QC - purple
+        "#4C9AFF", // Call Scheduled - blue
+        "#FFAB00", // Connected - yellow
+        "#36B37E", // Engaged - green
+        "#00B8D9", // Proposal Sent - cyan
+        "#00875A", // WON - green
+        "#253858", // Later Stage - dark blue
+        "#505F79"  // Recycled - gray
+      ];
+      
+      // Create stages in order
+      for (let i = 0; i < stageNames.length; i++) {
+        const stageName = stageNames[i];
+        const stageData: InsertDealStage = {
+          name: stageName,
+          order: i + 1,
+          color: stageColors[i % stageColors.length],
+          probability: stageName === "WON" ? 100 : Math.max(10, Math.min(90, (i + 1) * 10)),
+          count: boxesRecords.filter((r: any) => r.Stage === stageName).length
+        };
+        
+        try {
+          const stage = await storage.createDealStage(stageData);
+          stageMap.set(stageName, stage.id);
+        } catch (error) {
+          console.error(`Failed to create stage ${stageName}:`, error);
+        }
+      }
+      
+      // Process contacts
+      const contactMap = new Map();
+      for (const record of contactsRecords) {
+        const contactData: InsertContact = {
+          firstName: record["First Name"] || "",
+          lastName: record["Last Name"] || "",
+          name: `${record["First Name"] || ""} ${record["Last Name"] || ""}`.trim(),
+          company: record["Box Name"] || "",
+          position: record["Title"] || "",
+          email: record["Email Addresses"] || "",
+          phone: record["Phone Numbers"] || "",
+          address: record["Addresses"] || "",
+          city: "", // These would need to be parsed from the address
+          state: "",
+          country: "",
+          source: "Streak Import",
+          linkedIn: record["LinkedIn"] || "",
+          twitterHandle: record["Twitter"] || "",
+          facebookHandle: record["Facebook"] || "",
+          instagramHandle: record["Instagram"] || "",
+          status: "active",
+          boxKey: record["Box Key"] || "",
+          tags: []
+        };
+        
+        try {
+          const contact = await storage.createContact(contactData);
+          contactMap.set(record["Key"], contact.id);
+          contactMap.set(record["Box Key"], contact.id); // Map both the contact key and box key
+        } catch (error) {
+          console.error(`Failed to create contact for ${contactData.name}:`, error);
+        }
+      }
+      
+      // Process boxes (deals)
+      for (const record of boxesRecords) {
+        // Find stage ID
+        const stageId = stageMap.get(record.Stage);
+        if (!stageId) {
+          console.error(`Stage not found: ${record.Stage}`);
+          continue;
+        }
+        
+        // Find related contact (by box key)
+        const boxKey = record["Box Key"];
+        const contactId = contactMap.get(boxKey);
+        
+        if (!contactId) {
+          console.error(`Contact not found for box key: ${boxKey}`);
+          continue;
+        }
+        
+        const dealData: InsertDeal = {
+          name: record.Name || "",
+          contactId: contactId,
+          stageId: stageId,
+          value: 0, // Default value
+          notes: record.Notes || "",
+          description: "", 
+          done: record.Done === "Checked",
+          nextSteps: record["Next Steps"] || "",
+          thread: record.Thread || "",
+          source: record.Source || "",
+          interest: record.Interest || "",
+          fit: record.Fit || "",
+          type: record.Type || "",
+          persona: record.Persona || "",
+          category: record.Category || "",
+          daysInStage: parseInt(record["Days in Stage"] || "0"),
+          emailThreadCount: parseInt(record["Email Thread Count"] || "0"),
+          assignedTo: record["Assigned To"] || "",
+          boxKey: boxKey,
+          tags: []
+        };
+        
+        try {
+          await storage.createDeal(dealData);
+        } catch (error) {
+          console.error(`Failed to create deal for ${dealData.name}:`, error);
+        }
+      }
+      
+      res.status(200).json({ 
+        message: "Import completed successfully",
+        stats: {
+          stages: stageNames.length,
+          contacts: contactMap.size,
+          deals: boxesRecords.length
+        }
+      });
+      
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ message: "Failed to import data", error: String(error) });
     }
   });
 

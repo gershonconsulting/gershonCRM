@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import MainLayout from '@/layouts/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, Database, Layers, Eye } from 'lucide-react';
+import { Settings, Database, Layers, Eye, Upload } from 'lucide-react';
 import StageManager from '@/components/settings/StageManager';
 import CustomFieldManager from '@/components/settings/CustomFieldManager';
 import ViewManager from '@/components/settings/ViewManager';
+import ImportData from '@/components/settings/ImportData';
 
 export default function SettingsPage() {
   return (
@@ -29,6 +30,10 @@ export default function SettingsPage() {
               <Eye className="mr-2 h-4 w-4" /> 
               Custom Views
             </TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center">
+              <Upload className="mr-2 h-4 w-4" /> 
+              Import Data
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="pipeline">
@@ -41,6 +46,10 @@ export default function SettingsPage() {
 
           <TabsContent value="views">
             <ViewManager />
+          </TabsContent>
+
+          <TabsContent value="import">
+            <ImportData />
           </TabsContent>
         </Tabs>
       </div>

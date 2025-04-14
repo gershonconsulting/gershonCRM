@@ -46,9 +46,10 @@ export const dealStages = pgTable("deal_stages", {
   count: integer("count").default(0), // To track number of deals in this stage
 });
 
-export const insertDealStageSchema = createInsertSchema(dealStages).omit({
+export const insertDealStageSchema = createInsertSchema(dealStages, {
+  count: z.number().nullable().default(0)
+}).omit({
   id: true,
-  count: true,
 });
 
 // Deals schema based on MAbSilico's Streak data
