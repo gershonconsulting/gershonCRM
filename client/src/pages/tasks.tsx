@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Plus, Search, Filter, Calendar, Clock, Circle, CheckCircle } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -152,7 +152,7 @@ const TasksPage: React.FC = () => {
         description: "Task status has been updated successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: `Failed to update task: ${error}`,
@@ -179,7 +179,7 @@ const TasksPage: React.FC = () => {
       setIsFormOpen(false);
       form.reset();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: `Failed to ${selectedTask ? 'update' : 'create'} task: ${error}`,
