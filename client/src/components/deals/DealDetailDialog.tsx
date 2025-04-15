@@ -67,7 +67,6 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
   onEdit,
 }) => {
   const queryClient = useQueryClient();
-  const [selectedTab, setSelectedTab] = useState('all');
   
   // Fetch all stages
   const { data: stages = [] } = useQuery<DealStage[]>({
@@ -195,20 +194,15 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
         
         <div className="flex mt-2">
           <div className="w-2/3 pr-4">
-            <Tabs defaultValue="all" className="w-full" onValueChange={setSelectedTab}>
-              <TabsList className="grid w-full grid-cols-6">
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-1">
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="emails">Emails</TabsTrigger>
-                <TabsTrigger value="files">Files</TabsTrigger>
-                <TabsTrigger value="comments">Comments</TabsTrigger>
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                <TabsTrigger value="logs">Call Logs</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all" className="mt-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Input placeholder="Add comment" className="flex-grow" />
-                  <Button size="sm">Send</Button>
+                  <Input placeholder="Add comment (for saving notes)" className="flex-grow" />
+                  <Button size="sm" variant="default" className="bg-red-600 hover:bg-red-700">Save</Button>
                 </div>
                 
                 <Card>
@@ -247,49 +241,6 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
-              
-              <TabsContent value="emails">
-                <p className="text-center text-gray-500 py-10">No emails yet</p>
-              </TabsContent>
-              
-              <TabsContent value="files">
-                <p className="text-center text-gray-500 py-10">No files uploaded</p>
-              </TabsContent>
-              
-              <TabsContent value="comments">
-                <p className="text-center text-gray-500 py-10">No comments yet</p>
-              </TabsContent>
-              
-              <TabsContent value="tasks">
-                <div className="p-4 border rounded-md mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Tasks</h3>
-                    <Button size="sm" variant="ghost">
-                      <Plus className="h-4 w-4 mr-1" /> Add Task
-                    </Button>
-                  </div>
-                  
-                  {nextSteps.length > 0 ? (
-                    <div className="space-y-2">
-                      {nextSteps.map((step, index) => (
-                        <div key={index} className="flex items-start">
-                          <Checkbox className="mt-1 mr-2" />
-                          <div>
-                            <p className="text-sm">{step}</p>
-                            <p className="text-xs text-gray-500">Due: {format(new Date(), 'MMM d, yyyy')}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No tasks yet</p>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="logs">
-                <p className="text-center text-gray-500 py-10">No call logs yet</p>
               </TabsContent>
             </Tabs>
           </div>

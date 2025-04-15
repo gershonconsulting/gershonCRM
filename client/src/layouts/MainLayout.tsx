@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar/Sidebar';
 import UserRoleSelector from '@/components/auth/UserRoleSelector';
-import { Search, Bell, Settings, HelpCircle, Menu, Tag } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Bell, Settings, HelpCircle, Menu, Tag } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 
 // Application version - update this when making changes
@@ -48,19 +48,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Menu className="h-5 w-5" />
           </button>
           
-          {/* Search bar */}
+          {/* No search for now */}
           <div className="flex-1 px-4 flex justify-between">
             <div className="flex-1 flex items-center">
-              <div className="w-full max-w-lg lg:max-w-xs relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <Input
-                  className="block w-full pl-10 pr-3 py-2"
-                  placeholder="Search contacts, deals, tasks..."
-                  type="search"
-                />
-              </div>
+              {/* Empty space where search was */}
             </div>
             
             {/* Right side buttons */}
