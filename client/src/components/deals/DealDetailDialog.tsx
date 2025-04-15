@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   Dialog, 
   DialogContent, 
@@ -33,7 +34,7 @@ import {
   TabsTrigger 
 } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { DealWithContact } from '@shared/schema';
+import { DealStage, DealWithContact } from '@shared/schema';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Select,
@@ -48,6 +49,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserRole, useUserRole } from '@/hooks/use-user-role';
 import RoleBasedAccess from '@/components/auth/RoleBasedAccess';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 
 interface DealDetailDialogProps {
   deal: DealWithContact;
@@ -62,14 +65,50 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
   onOpenChange,
   onEdit,
 }) => {
+  const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState('all');
   
+  // Fetch all stages
+  const { data: stages = [] } = useQuery<DealStage[]>({
+    queryKey: ['/api/deal-stages'],
+  });
+  
+  // Handle stage change
+  const handleStageChange = async (stageId: string) => {
+    try {
+      const newStageId = parseInt(stageId, 10);
+      if (isNaN(newStageId) || newStageId === deal.stageId) return;
+      
+      await apiRequest('PUT', `/api/deals/${deal.id}`, { 
+        stageId: newStageId 
+      });
+      
+      // Create an activity for this stage change
+      const stage = stages.find(s => s.id === newStageId);
+      if (stage) {
+        await apiRequest('POST', '/api/activities', {
+          type: 'deal_update',
+          description: `Deal moved to ${stage.name} stage`,
+          dealId: deal.id,
+          contactId: deal.contactId,
+        });
+      }
+      
+      // Refresh deals and activities data
+      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/activities'] });
+    } catch (error) {
+      console.error('Failed to update deal stage:', error);
+    }
+  };
+  
   // Format the value as currency
+  const dealValue = typeof deal.value === 'number' ? deal.value : 0;
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
-  }).format(deal.value);
+  }).format(dealValue);
 
   // Format date
   const formattedDate = format(new Date(deal.createdAt), 'MMM dd, yyyy');
@@ -276,21 +315,19 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
                 </Badge>
               </h3>
               
-              <Select defaultValue={deal.stage.id.toString()}>
+              <Select 
+                defaultValue={deal.stage.id.toString()} 
+                onValueChange={handleStageChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select stage" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Lead</SelectItem>
-                  <SelectItem value="2">Contacted</SelectItem>
-                  <SelectItem value="3">Reccommend By QC</SelectItem>
-                  <SelectItem value="4">Call Scheduled</SelectItem>
-                  <SelectItem value="5">Connected</SelectItem>
-                  <SelectItem value="6">Engaged</SelectItem>
-                  <SelectItem value="7">Proposal Sent</SelectItem>
-                  <SelectItem value="8">WON</SelectItem>
-                  <SelectItem value="9">Later Stage</SelectItem>
-                  <SelectItem value="10">Recycled</SelectItem>
+                  {stages.sort((a, b) => a.order - b.order).map(stage => (
+                    <SelectItem key={stage.id} value={stage.id.toString()}>
+                      {stage.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

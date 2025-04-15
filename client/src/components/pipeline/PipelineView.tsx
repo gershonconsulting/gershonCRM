@@ -10,6 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserRole, useUserRole } from "@/hooks/use-user-role";
 import RoleBasedAccess from "@/components/auth/RoleBasedAccess";
 import { ResizableTableHeader } from '@/components/ui/resizable-table';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PipelineViewProps {
   onNewDeal?: () => void;
@@ -264,7 +271,34 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
                                     className="w-2 h-2 rounded-sm mr-1"
                                     style={{ backgroundColor: stageColors[stage.name as keyof typeof stageColors] || stage.color }}
                                   />
-                                  {stage.name}
+                                  <Select 
+                                    defaultValue={stage.id.toString()} 
+                                    onValueChange={(newStageId) => {
+                                      // Prevent click event from bubbling up to the row
+                                      const event = window.event;
+                                      if (event) {
+                                        event.stopPropagation();
+                                      }
+                                      handleStageChange(deal.id, parseInt(newStageId));
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-6 py-0 pl-0 pr-1 border-0 bg-transparent hover:bg-gray-100 font-normal text-xs">
+                                      <SelectValue>{stage.name}</SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sortedStages.map(s => (
+                                        <SelectItem key={s.id} value={s.id.toString()} className="text-xs py-1">
+                                          <div className="flex items-center">
+                                            <div 
+                                              className="w-2 h-2 rounded-sm mr-1"
+                                              style={{ backgroundColor: stageColors[s.name as keyof typeof stageColors] || s.color }}
+                                            />
+                                            {s.name}
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               );
                             case 'source':
