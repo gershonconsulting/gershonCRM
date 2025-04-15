@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -24,6 +24,7 @@ import { insertContactSchema, Contact } from '@shared/schema';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import CountryCitySelect from '@/components/forms/CountryCitySelect';
 
 interface ContactFormProps {
   contact?: Contact | null;
@@ -41,6 +42,10 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!contact;
+  
+  // State for country and city
+  const [selectedCountry, setSelectedCountry] = useState(contact?.country || '');
+  const [selectedCity, setSelectedCity] = useState(contact?.city || '');
 
   // Extend the schema with validation
   const formSchema = insertContactSchema.extend({
@@ -52,6 +57,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
     company: z.string().min(1, "Company name is required").nullable().optional().default(''),
     position: z.string().nullable().optional().default(''),
     location: z.string().nullable().optional().default(''),
+    country: z.string().nullable().optional().default(''),
+    city: z.string().nullable().optional().default(''),
     linkedIn: z.string().nullable().optional().default(''),
     twitter: z.string().nullable().optional().default(''),
     facebook: z.string().nullable().optional().default(''),
@@ -72,6 +79,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
       company: contact?.company || '',
       position: contact?.position || '',
       location: contact?.location || '',
+      country: contact?.country || '',
+      city: contact?.city || '',
       linkedIn: contact?.linkedIn || '',
       twitter: contact?.twitter || '',
       facebook: contact?.facebook || '',
@@ -81,6 +90,12 @@ const ContactForm: React.FC<ContactFormProps> = ({
     },
   });
 
+  // Effect to update form values when country/city change 
+  useEffect(() => {
+    form.setValue('country', selectedCountry);
+    form.setValue('city', selectedCity);
+  }, [selectedCountry, selectedCity, form]);
+  
   // Mutation for creating/updating contact
   const contactMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
@@ -230,12 +245,22 @@ const ContactForm: React.FC<ContactFormProps> = ({
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input placeholder="City, State/Province, Country" {...field} />
+                    <Input placeholder="Address Line" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            
+            <div className="border p-4 rounded-md">
+              <div className="text-sm font-medium mb-2">Location Details</div>
+              <CountryCitySelect
+                selectedCountry={selectedCountry}
+                selectedCity={selectedCity}
+                onCountryChange={setSelectedCountry}
+                onCityChange={setSelectedCity}
+              />
+            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <FormField

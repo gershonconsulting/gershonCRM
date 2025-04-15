@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { UserRoleProvider } from "@/hooks/use-user-role";
 import NotFound from "@/pages/not-found";
+import Pipeline from "@/pages/pipeline";
 import Dashboard from "@/pages/dashboard";
 import Contacts from "@/pages/contacts";
 import Reports from "@/pages/reports";
@@ -16,7 +17,8 @@ import ByMonth from "@/pages/views/by-month";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={Pipeline} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/contacts" component={Contacts} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />

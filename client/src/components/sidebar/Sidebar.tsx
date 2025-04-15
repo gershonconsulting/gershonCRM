@@ -31,7 +31,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
   const { isAdmin, role, username } = useUserRole();
 
   const mainMenu = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: 'Pipeline', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: 'Dashboard', path: '/dashboard', icon: <PieChart className="h-5 w-5" /> },
     { 
       name: 'Views', 
       path: '/views', 
