@@ -37,12 +37,10 @@ export default function SettingsPage() {
               </TabsTrigger>
             </RoleBasedAccess>
             
-            <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
-              <TabsTrigger value="views" className="flex items-center">
-                <Eye className="mr-2 h-4 w-4" /> 
-                Custom Views
-              </TabsTrigger>
-            </RoleBasedAccess>
+            <TabsTrigger value="views" className="flex items-center">
+              <Eye className="mr-2 h-4 w-4" /> 
+              Custom Views
+            </TabsTrigger>
             
             <RoleBasedAccess allowedRoles={[UserRole.ADMIN]}>
               <TabsTrigger value="import" className="flex items-center">
@@ -78,12 +76,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="views">
-            <RoleBasedAccess
-              allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}
-              fallback={<AccessDeniedMessage feature="View Settings" />}
-            >
-              <ViewManager />
-            </RoleBasedAccess>
+            <ViewManager />
           </TabsContent>
 
           <TabsContent value="import">

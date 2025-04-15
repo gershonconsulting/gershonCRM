@@ -63,12 +63,14 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User>;
   private contacts: Map<number, Contact>;
   private dealStages: Map<number, DealStage>;
   private deals: Map<number, Deal>;
   private tasks: Map<number, Task>;
   private activities: Map<number, Activity>;
   
+  private userId: number;
   private contactId: number;
   private dealStageId: number;
   private dealId: number;
@@ -76,12 +78,14 @@ export class MemStorage implements IStorage {
   private activityId: number;
   
   constructor() {
+    this.users = new Map();
     this.contacts = new Map();
     this.dealStages = new Map();
     this.deals = new Map();
     this.tasks = new Map();
     this.activities = new Map();
     
+    this.userId = 1;
     this.contactId = 1;
     this.dealStageId = 1;
     this.dealId = 1;
@@ -92,6 +96,106 @@ export class MemStorage implements IStorage {
     this.initializeDefaultStages();
     // Add some sample data
     this.addSampleData();
+    // Add default users
+    this.initializeDefaultUsers();
+  }
+  
+  private initializeDefaultUsers() {
+    // Create default admin user
+    const adminUser: User = {
+      id: this.userId++,
+      username: "olivier",
+      password: "$2a$10$XLEYVQOyNfhzd7KA9vEFGOJvt7fWbV.IuwOIjKLA5G50OISL2U9KG", // hashed "password"
+      email: "olivier@example.com",
+      firstName: "Olivier",
+      lastName: "Admin",
+      role: "admin",
+      isActive: true,
+      createdAt: new Date(),
+      lastLogin: null,
+      company: "Gershon Consulting",
+      position: "Admin"
+    };
+    this.users.set(adminUser.id, adminUser);
+    
+    // Create manager users
+    const managerUsers = [
+      {
+        username: "joseph",
+        email: "joseph@example.com",
+        firstName: "Joseph",
+        lastName: "Manager",
+        role: "manager",
+      },
+      {
+        username: "aina",
+        email: "aina@example.com",
+        firstName: "Aina",
+        lastName: "Manager",
+        role: "manager",
+      },
+      {
+        username: "winnie",
+        email: "winnie@example.com",
+        firstName: "Winnie",
+        lastName: "Manager",
+        role: "manager",
+      }
+    ];
+    
+    managerUsers.forEach(user => {
+      const newUser: User = {
+        id: this.userId++,
+        username: user.username,
+        password: "$2a$10$XLEYVQOyNfhzd7KA9vEFGOJvt7fWbV.IuwOIjKLA5G50OISL2U9KG", // hashed "password"
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        isActive: true,
+        createdAt: new Date(),
+        lastLogin: null,
+        company: "Gershon Consulting",
+        position: "Manager"
+      };
+      this.users.set(newUser.id, newUser);
+    });
+    
+    // Create client users
+    const clientUsers = [
+      {
+        username: "zachary",
+        email: "zachary@example.com",
+        firstName: "Zachary",
+        lastName: "Client",
+        role: "client",
+      },
+      {
+        username: "vincent",
+        email: "vincent@example.com",
+        firstName: "Vincent",
+        lastName: "Client",
+        role: "client",
+      }
+    ];
+    
+    clientUsers.forEach(user => {
+      const newUser: User = {
+        id: this.userId++,
+        username: user.username,
+        password: "$2a$10$XLEYVQOyNfhzd7KA9vEFGOJvt7fWbV.IuwOIjKLA5G50OISL2U9KG", // hashed "password"
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        isActive: true,
+        createdAt: new Date(),
+        lastLogin: null,
+        company: "Client Company",
+        position: "User"
+      };
+      this.users.set(newUser.id, newUser);
+    });
   }
   
   private initializeDefaultStages() {
@@ -400,6 +504,45 @@ export class MemStorage implements IStorage {
   
   async deleteActivity(id: number): Promise<boolean> {
     return this.activities.delete(id);
+  }
+  
+  // User management
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => a.username.localeCompare(b.username));
+  }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const id = this.userId++;
+    const newUser: User = { 
+      ...user, 
+      id, 
+      createdAt: new Date(),
+      lastLogin: null,
+      isActive: true
+    };
+    this.users.set(id, newUser);
+    return newUser;
+  }
+  
+  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) return undefined;
+    
+    const updatedUser = { ...existingUser, ...user };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
   }
   
   // Dashboard stats

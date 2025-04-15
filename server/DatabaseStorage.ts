@@ -1,9 +1,9 @@
 import { eq, desc, and, or, isNull, sql } from "drizzle-orm";
 import {
-  Contact, Deal, Task, Activity, DealStage,
-  InsertContact, InsertDeal, InsertTask, InsertActivity, InsertDealStage,
+  User, Contact, Deal, Task, Activity, DealStage,
+  InsertUser, InsertContact, InsertDeal, InsertTask, InsertActivity, InsertDealStage,
   DealWithContact, TaskWithRelations, ActivityWithRelations,
-  contacts, deals, tasks, activities, dealStages
+  users, contacts, deals, tasks, activities, dealStages
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
@@ -426,6 +426,48 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
+  // User Management
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.username);
+  }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        ...user,
+        createdAt: new Date(),
+        isActive: true,
+        lastLogin: null
+      })
+      .returning();
+    return newUser;
+  }
+  
+  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(user)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    await db.delete(users).where(eq(users.id, id));
+    return true;
+  }
+  
   // Dashboard Stats
   async getDashboardStats(): Promise<{
     activeDeals: number;

@@ -800,5 +800,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Management API Routes
+  app.get(`${api}/users`, async (req, res) => {
+    try {
+      // Check if user has admin role
+      // For now, we'll allow all requests since auth isn't implemented
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get(`${api}/users/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post(`${api}/users`, async (req, res) => {
+    try {
+      // Create user validation schema with password validation
+      const createUserSchema = insertUserSchema.extend({
+        password: z.string().min(6, "Password must be at least 6 characters"),
+      });
+      
+      const validationResult = createUserSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(validationResult.data.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Hash the password
+      const hashedPassword = await hashPassword(validationResult.data.password);
+      
+      // Create user with hashed password
+      const newUser = await storage.createUser({
+        ...validationResult.data,
+        password: hashedPassword,
+      });
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = newUser;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put(`${api}/users/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Create update schema without requiring password
+      const updateUserSchema = insertUserSchema.partial();
+      
+      const validationResult = updateUserSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      // If password is being updated, hash it
+      let userData = validationResult.data;
+      if (userData.password) {
+        userData.password = await hashPassword(userData.password);
+      }
+      
+      const updatedUser = await storage.updateUser(id, userData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete(`${api}/users/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteUser(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   return httpServer;
 }

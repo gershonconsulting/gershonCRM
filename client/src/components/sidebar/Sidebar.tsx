@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
   // Admin menu item - only visible to admins
   const adminMenuItem = { 
     name: 'Admin', 
-    path: '/admin', 
+    path: '/adminpanel', 
     icon: <Shield className="h-5 w-5" />,
     requiredRole: UserRole.ADMIN
   };
