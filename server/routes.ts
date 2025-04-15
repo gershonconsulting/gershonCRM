@@ -17,6 +17,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { importContactsFromCSV, importDealsFromCSV, importCombinedData } from './import-utils';
+import { loadInitialData } from './data-loader';
 
 // Configure multer for file uploads
 const storage_config = multer.diskStorage({

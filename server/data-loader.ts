@@ -2,42 +2,33 @@ import { parse } from 'csv-parse/sync';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { eq } from 'drizzle-orm';
-import ws from 'ws';
+import { db } from './db';
+import { contacts, deals, dealStages } from '@shared/schema';
+import { InsertContact, InsertDeal, InsertDealStage } from '@shared/schema';
 
-// Configure neon to use ws
-neonConfig.webSocketConstructor = ws;
-
-// Get the directory name in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Import schema directly
-import * as schema from './shared/schema';
-
-// Get the database connection
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool, { schema });
-
-async function updateDatabase() {
+/**
+ * Loads initial data from CSV files into the database
+ */
+export async function loadInitialData() {
   console.log("Starting to load initial data from CSV files...");
   
   try {
+    // Get the directory name in ESM
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const rootDir = path.join(__dirname, '..');
+    
     // Define file paths
-    const contactsFilePath = path.join(__dirname, 'attached_assets/Streak Export_ MAbSilico - LG (4-14-25, 3_32 PM) - Contacts (MAbSilico - LG).csv');
-    const boxesFilePath = path.join(__dirname, 'attached_assets/Streak Export_ MAbSilico - LG (4-14-25, 3_32 PM) - Boxes (MAbSilico - LG).csv');
+    const contactsFilePath = path.join(rootDir, 'attached_assets/Streak Export_ MAbSilico - LG (4-14-25, 3_32 PM) - Contacts (MAbSilico - LG).csv');
+    const boxesFilePath = path.join(rootDir, 'attached_assets/Streak Export_ MAbSilico - LG (4-14-25, 3_32 PM) - Boxes (MAbSilico - LG).csv');
     
     // Check if files exist
     if (!fs.existsSync(contactsFilePath)) {
-      console.error(`Contacts file not found at: ${contactsFilePath}`);
-      return;
+      throw new Error(`Contacts file not found at: ${contactsFilePath}`);
     }
     
     if (!fs.existsSync(boxesFilePath)) {
-      console.error(`Boxes file not found at: ${boxesFilePath}`);
-      return;
+      throw new Error(`Boxes file not found at: ${boxesFilePath}`);
     }
     
     // Read and parse CSV files
@@ -60,9 +51,9 @@ async function updateDatabase() {
     
     // Process and store stages first
     const stageMap = new Map();
-    const stageSets = new Set();
+    const stageSets = new Set<string>();
     
-    boxesRecords.forEach((record) => {
+    boxesRecords.forEach((record: any) => {
       if (record.Stage && typeof record.Stage === 'string') {
         stageSets.add(record.Stage);
       }
@@ -86,9 +77,9 @@ async function updateDatabase() {
     
     // First delete all existing data
     console.log("Deleting existing data...");
-    await db.delete(schema.deals);
-    await db.delete(schema.contacts);
-    await db.delete(schema.dealStages);
+    await db.delete(deals);
+    await db.delete(contacts);
+    await db.delete(dealStages);
     
     // Create stages in order
     console.log("Creating stages...");
@@ -96,9 +87,9 @@ async function updateDatabase() {
       const stageName = stageNames[i];
       if (!stageName) continue;
       
-      const count = boxesRecords.filter((r) => r.Stage === stageName).length;
+      const count = boxesRecords.filter((r: any) => r.Stage === stageName).length;
       
-      const stageData = {
+      const stageData: InsertDealStage = {
         name: stageName,
         order: i + 1,
         color: stageColors[i % stageColors.length],
@@ -107,7 +98,7 @@ async function updateDatabase() {
       };
       
       try {
-        const [stage] = await db.insert(schema.dealStages).values(stageData).returning();
+        const [stage] = await db.insert(dealStages).values(stageData).returning();
         stageMap.set(stageName, stage.id);
       } catch (error) {
         console.error(`Failed to create stage ${stageName}:`, error);
@@ -118,7 +109,7 @@ async function updateDatabase() {
     console.log("Creating contacts...");
     const contactMap = new Map();
     for (const record of contactsRecords) {
-      const contactData = {
+      const contactData: InsertContact = {
         firstName: record["First Name"] || "",
         lastName: record["Last Name"] || "",
         name: `${record["First Name"] || ""} ${record["Last Name"] || ""}`.trim(),
@@ -141,7 +132,7 @@ async function updateDatabase() {
       };
       
       try {
-        const [contact] = await db.insert(schema.contacts).values(contactData).returning();
+        const [contact] = await db.insert(contacts).values(contactData).returning();
         contactMap.set(record["Key"], contact.id);
         contactMap.set(record["Box Key"], contact.id); // Map both the contact key and box key
       } catch (error) {
@@ -180,7 +171,7 @@ async function updateDatabase() {
         value = parseFloat(record.Value);
       }
       
-      const dealData = {
+      const dealData: InsertDeal = {
         name: record.Name || "",
         contactId: contactId,
         stageId: stageId,
@@ -204,7 +195,7 @@ async function updateDatabase() {
       };
       
       try {
-        await db.insert(schema.deals).values(dealData);
+        await db.insert(deals).values(dealData);
         dealsCreated++;
       } catch (error) {
         console.error(`Failed to create deal for ${dealData.name}:`, error);
@@ -214,14 +205,14 @@ async function updateDatabase() {
     console.log("Initial data loading completed successfully!");
     console.log(`Created: ${stageNames.length} stages, ${contactMap.size} contacts, ${dealsCreated} deals`);
     
+    return {
+      stages: stageNames.length,
+      contacts: contactMap.size,
+      deals: dealsCreated
+    };
+    
   } catch (error) {
     console.error("Failed to load initial data:", error);
-  } finally {
-    // Close the database connection
-    await pool.end();
-    process.exit(0);
+    throw error;
   }
 }
-
-// Run the function
-updateDatabase();
