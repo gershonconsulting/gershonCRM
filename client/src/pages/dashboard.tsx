@@ -53,11 +53,9 @@ const Dashboard: React.FC = () => {
     queryKey: ['/api/deals'],
   });
 
-  // Format currency 
-  const formatCurrency = (value: number) => {
+  // Format number (removed currency formatting as per client requirement)
+  const formatNumber = (value: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -357,12 +355,12 @@ const Dashboard: React.FC = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Pipeline Value</CardTitle>
-                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <CardTitle className="text-sm font-medium">Pipeline Metrics</CardTitle>
+                  <Activity className="h-4 w-4 text-gray-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(stats.pipelineValue)}</div>
-                  <p className="text-xs text-gray-500">Avg: {formatCurrency(averageDealSize)}/deal</p>
+                  <div className="text-2xl font-bold">{formatNumber(stats.pipelineValue)}</div>
+                  <p className="text-xs text-gray-500">Avg: {formatNumber(averageDealSize)}/deal</p>
                 </CardContent>
               </Card>
 
@@ -448,7 +446,7 @@ const Dashboard: React.FC = () => {
                       
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">Deal Value Growth</CardTitle>
+                          <CardTitle className="text-sm font-medium">Deal Score Growth</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="text-lg font-bold">{dataAnalysis.dealValueGrowthRate}%</div>
@@ -460,12 +458,12 @@ const Dashboard: React.FC = () => {
                       
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">Avg. Deal Size</CardTitle>
+                          <CardTitle className="text-sm font-medium">Avg. Deal Score</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-lg font-bold">{formatCurrency(averageDealSize)}</div>
+                          <div className="text-lg font-bold">{formatNumber(averageDealSize)}</div>
                           <p className="text-xs text-gray-500">
-                            Median: {formatCurrency(medianDealSize)}
+                            Median: {formatNumber(medianDealSize)}
                           </p>
                         </CardContent>
                       </Card>
@@ -475,7 +473,7 @@ const Dashboard: React.FC = () => {
                           <CardTitle className="text-sm font-medium">Sales Velocity</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-lg font-bold">{formatCurrency(salesVelocity.velocity)}/day</div>
+                          <div className="text-lg font-bold">{formatNumber(salesVelocity.velocity)}/day</div>
                           <p className="text-xs text-gray-500">
                             {salesVelocity.avgSalesCycle} days avg. cycle
                           </p>
@@ -497,7 +495,7 @@ const Dashboard: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
                           <CardHeader>
-                            <CardTitle className="text-sm">Value by Company Interest</CardTitle>
+                            <CardTitle className="text-sm">Metrics by Company Interest</CardTitle>
                           </CardHeader>
                           <CardContent className="p-0">
                             <div className="p-4 max-h-80 overflow-y-auto">
@@ -506,8 +504,8 @@ const Dashboard: React.FC = () => {
                                   <tr className="border-b">
                                     <th className="text-left py-2">Interest</th>
                                     <th className="text-right py-2">Count</th>
-                                    <th className="text-right py-2">Total Value</th>
-                                    <th className="text-right py-2">Avg Value</th>
+                                    <th className="text-right py-2">Total Score</th>
+                                    <th className="text-right py-2">Avg Score</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -515,8 +513,8 @@ const Dashboard: React.FC = () => {
                                     <tr key={item.category} className="border-b border-gray-100">
                                       <td className="py-2">{item.category}</td>
                                       <td className="text-right">{item.count}</td>
-                                      <td className="text-right">{formatCurrency(item.value)}</td>
-                                      <td className="text-right">{formatCurrency(item.avgValue)}</td>
+                                      <td className="text-right">{formatNumber(item.value)}</td>
+                                      <td className="text-right">{formatNumber(item.avgValue)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -527,7 +525,7 @@ const Dashboard: React.FC = () => {
                         
                         <Card>
                           <CardHeader>
-                            <CardTitle className="text-sm">Value by Company Fit</CardTitle>
+                            <CardTitle className="text-sm">Metrics by Company Fit</CardTitle>
                           </CardHeader>
                           <CardContent className="p-0">
                             <div className="p-4 max-h-80 overflow-y-auto">
@@ -536,8 +534,8 @@ const Dashboard: React.FC = () => {
                                   <tr className="border-b">
                                     <th className="text-left py-2">Fit</th>
                                     <th className="text-right py-2">Count</th>
-                                    <th className="text-right py-2">Total Value</th>
-                                    <th className="text-right py-2">Avg Value</th>
+                                    <th className="text-right py-2">Total Score</th>
+                                    <th className="text-right py-2">Avg Score</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -545,8 +543,8 @@ const Dashboard: React.FC = () => {
                                     <tr key={item.category} className="border-b border-gray-100">
                                       <td className="py-2">{item.category}</td>
                                       <td className="text-right">{item.count}</td>
-                                      <td className="text-right">{formatCurrency(item.value)}</td>
-                                      <td className="text-right">{formatCurrency(item.avgValue)}</td>
+                                      <td className="text-right">{formatNumber(item.value)}</td>
+                                      <td className="text-right">{formatNumber(item.avgValue)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -684,7 +682,7 @@ const Dashboard: React.FC = () => {
               {/* Pipeline Value by Stage */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Pipeline Value by Stage</CardTitle>
+                  <CardTitle>Pipeline Metrics by Stage</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="h-80">
@@ -696,14 +694,14 @@ const Dashboard: React.FC = () => {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" 
-                          tickFormatter={(value) => formatCurrency(value)}
+                          tickFormatter={(value) => formatNumber(value)}
                         />
                         <YAxis dataKey="name" type="category" width={100} />
                         <Tooltip 
-                          formatter={(value) => [formatCurrency(value as number), "Value"]}
+                          formatter={(value) => [formatNumber(value as number), "Score"]}
                         />
                         <Legend />
-                        <Bar dataKey="value" name="Pipeline Value" fill="#8884d8" />
+                        <Bar dataKey="value" name="Pipeline Score" fill="#8884d8" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -727,7 +725,7 @@ const Dashboard: React.FC = () => {
                         <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                         <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                         <Tooltip formatter={(value, name) => {
-                          if (name === "Total Value") return [formatCurrency(value as number), name];
+                          if (name === "Total Value") return [formatNumber(value as number), name];
                           return [value, name];
                         }} />
                         <Legend />
