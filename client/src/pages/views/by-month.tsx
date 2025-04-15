@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/select';
 
 const ByMonthPage: React.FC = () => {
-  // Create month options for the last 12 months
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+  // Create month options for the last 12 months plus current month
+  const monthOptions = Array.from({ length: 13 }, (_, i) => {
     const date = subMonths(new Date(), i);
     return {
       value: format(date, 'yyyy-MM'),
@@ -24,6 +24,14 @@ const ByMonthPage: React.FC = () => {
       startDate: startOfMonth(date),
       endDate: endOfMonth(date)
     };
+  });
+  
+  // Add a "Next Steps" option similar to the example shown
+  monthOptions.unshift({
+    value: 'next-steps',
+    label: 'Next Steps',
+    startDate: new Date(),
+    endDate: new Date()
   });
   
   const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
@@ -36,16 +44,18 @@ const ByMonthPage: React.FC = () => {
   // Find the selected month object
   const selectedMonthObj = monthOptions.find(month => month.value === selectedMonth);
   
-  // Filter deals by creation month
-  const filteredDeals = selectedMonthObj 
-    ? deals.filter(deal => {
-        const dealDate = new Date(deal.createdAt);
-        return isWithinInterval(dealDate, {
-          start: selectedMonthObj.startDate,
-          end: selectedMonthObj.endDate
-        });
-      })
-    : deals;
+  // Filter deals by creation month or next steps
+  const filteredDeals = selectedMonth === 'next-steps'
+    ? deals.filter(deal => deal.nextSteps && deal.nextSteps.trim() !== '')
+    : selectedMonthObj
+      ? deals.filter(deal => {
+          const dealDate = new Date(deal.createdAt);
+          return isWithinInterval(dealDate, {
+            start: selectedMonthObj.startDate,
+            end: selectedMonthObj.endDate
+          });
+        })
+      : deals;
     
   return (
     <MainLayout>
@@ -80,7 +90,11 @@ const ByMonthPage: React.FC = () => {
         
         <div className="mb-6 bg-white rounded-md p-4 shadow-sm border border-gray-200">
           <div className="text-sm text-gray-600">
-            <p>Showing <span className="font-semibold">{filteredDeals.length}</span> deals created in <span className="font-semibold">{selectedMonthObj?.label}</span></p>
+            {selectedMonth === 'next-steps' ? (
+              <p>Showing <span className="font-semibold">{filteredDeals.length}</span> deals with defined next steps</p>
+            ) : (
+              <p>Showing <span className="font-semibold">{filteredDeals.length}</span> deals created in <span className="font-semibold">{selectedMonthObj?.label}</span></p>
+            )}
           </div>
         </div>
         

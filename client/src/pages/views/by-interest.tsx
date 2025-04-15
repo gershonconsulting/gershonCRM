@@ -21,8 +21,8 @@ const ByInterestPage: React.FC = () => {
     queryKey: ['/api/deals'],
   });
   
-  // Use predefined interest values: High, Medium, Low
-  const interestValues = ['all', 'High', 'Medium', 'Low'];
+  // Use predefined interest values based on client example
+  const interestValues = ['all', 'Antibody', 'Chemistry', 'AI/ML technology', 'Target Discovery', 'Software'];
   
   // Filter deals by interest
   const filteredDeals = selectedInterest === 'all' 
@@ -33,7 +33,7 @@ const ByInterestPage: React.FC = () => {
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Deals By Interest</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Deals By Type</h1>
           
           <div className="flex gap-3">
             <Select

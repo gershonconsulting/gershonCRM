@@ -21,8 +21,8 @@ const ByFitPage: React.FC = () => {
     queryKey: ['/api/deals'],
   });
   
-  // Use predefined fit values: High, Medium, Low
-  const fitValues = ['all', 'High', 'Medium', 'Low'];
+  // Use predefined category values based on client example
+  const fitValues = ['all', 'Client', 'Partner', 'Competitor', 'Consultant', 'Investor'];
   
   // Filter deals by fit
   const filteredDeals = selectedFit === 'all' 
@@ -33,7 +33,7 @@ const ByFitPage: React.FC = () => {
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Deals By Fit</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Deals By Category</h1>
           
           <div className="flex gap-3">
             <Select
@@ -41,12 +41,12 @@ const ByFitPage: React.FC = () => {
               onValueChange={setSelectedFit}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Fit" />
+                <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
                 {fitValues.map((fit) => (
                   <SelectItem key={fit} value={fit}>
-                    {fit === 'all' ? 'All Fits' : fit}
+                    {fit === 'all' ? 'All Categories' : fit}
                   </SelectItem>
                 ))}
               </SelectContent>
