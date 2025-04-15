@@ -57,41 +57,13 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        {isLoading ? (
-          <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, index) => (
-              <div key={index} className="bg-white overflow-hidden shadow rounded-lg h-32 animate-pulse">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard 
-              title="Active Deals" 
-              value={stats?.activeDeals || 0} 
-              change={12.5} 
-            />
-            <StatCard 
-              title="Pipeline Value" 
-              value={formatCurrency(stats?.pipelineValue || 0)} 
-              change={8.2} 
-            />
-            <StatCard 
-              title="Win Rate" 
-              value={`${stats?.winRate || 0}%`} 
-              change={-3.1} 
-            />
-            <StatCard 
-              title="New Contacts" 
-              value={stats?.newContacts || 0} 
-              change={24.7} 
-            />
-          </div>
-        )}
+        <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-1">
+          <StatCard 
+            title="New Contacts" 
+            value={isLoading ? "--" : (stats?.newContacts || 0)} 
+            change={24.7} 
+          />
+        </div>
 
         {/* Pipeline View */}
         <PipelineView onNewDeal={() => setIsDealFormOpen(true)} />
