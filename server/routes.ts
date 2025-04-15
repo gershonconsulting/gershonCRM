@@ -8,9 +8,11 @@ import {
   insertTaskSchema, 
   insertActivitySchema,
   insertDealStageSchema,
+  insertUserSchema,
   InsertContact,
   InsertDeal,
-  InsertDealStage
+  InsertDealStage,
+  InsertUser
 } from "@shared/schema";
 import { parse } from 'csv-parse/sync';
 import multer from 'multer';
@@ -18,6 +20,7 @@ import path from 'path';
 import fs from 'fs';
 import { importContactsFromCSV, importDealsFromCSV, importCombinedData } from './import-utils';
 import { loadInitialData } from './data-loader';
+import { hashPassword, verifyPassword } from './auth-utils';
 
 // Configure multer for file uploads
 const storage_config = multer.diskStorage({

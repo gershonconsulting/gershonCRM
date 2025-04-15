@@ -1,11 +1,19 @@
 import {
-  Contact, Deal, Task, Activity, DealStage,
-  InsertContact, InsertDeal, InsertTask, InsertActivity, InsertDealStage,
+  User, Contact, Deal, Task, Activity, DealStage,
+  InsertUser, InsertContact, InsertDeal, InsertTask, InsertActivity, InsertDealStage,
   DealWithContact, TaskWithRelations, ActivityWithRelations,
 } from "@shared/schema";
 import { DatabaseStorage } from "./DatabaseStorage";
 
 export interface IStorage {
+  // Users
+  getUsers(): Promise<User[]>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  
   // Contacts
   getContacts(): Promise<Contact[]>;
   getContact(id: number): Promise<Contact | undefined>;
