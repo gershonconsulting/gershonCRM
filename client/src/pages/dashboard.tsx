@@ -63,16 +63,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards and Role Selector */}
-        <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-2">
-          <div>
-            <StatCard 
-              title="New Contacts" 
-              value={isLoading ? "--" : (stats?.newContacts || 0)} 
-              change={24.7} 
-            />
-          </div>
-          <div>
+        {/* Role Selector */}
+        <div className="mt-8">
+          <div className="max-w-md">
             <UserRoleSelector />
           </div>
         </div>
