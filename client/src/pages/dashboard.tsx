@@ -14,7 +14,7 @@ const Dashboard: React.FC = () => {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
   // Fetch dashboard stats
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats = { newContacts: 0 }, isLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
 

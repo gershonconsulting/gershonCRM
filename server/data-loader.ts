@@ -102,11 +102,13 @@ export async function loadInitialData() {
       }
     }
     
-    // Process contacts
+    // Process contacts in batches
     console.log("Creating contacts...");
     const contactMap = new Map();
-    for (const record of contactsRecords) {
-      const contactData: InsertContact = {
+    const BATCH_SIZE = 50;
+    
+    const contactsArray = contactsRecords.map((record: any) => {
+      return {
         firstName: record["First Name"] || "",
         lastName: record["Last Name"] || "",
         name: `${record["First Name"] || ""} ${record["Last Name"] || ""}`.trim(),
@@ -125,40 +127,62 @@ export async function loadInitialData() {
         instagramHandle: record["Instagram"] || "",
         status: "active",
         boxKey: record["Box Key"] || "",
-        tags: []
+        tags: [],
+        _key: record["Key"],
+        _boxKey: record["Box Key"]
       };
+    });
+    
+    // Process in batches
+    for (let i = 0; i < contactsArray.length; i += BATCH_SIZE) {
+      const batch = contactsArray.slice(i, i + BATCH_SIZE);
+      console.log(`Processing contacts batch ${i/BATCH_SIZE + 1}/${Math.ceil(contactsArray.length/BATCH_SIZE)}`);
       
       try {
-        const [contact] = await db.insert(contacts).values(contactData).returning();
-        contactMap.set(record["Key"], contact.id);
-        contactMap.set(record["Box Key"], contact.id); // Map both the contact key and box key
+        const insertData = batch.map(contact => {
+          const { _key, _boxKey, ...contactData } = contact;
+          return contactData;
+        });
+        
+        const returnedContacts = await db.insert(contacts).values(insertData).returning();
+        
+        // Map returned contacts to their keys
+        for (let j = 0; j < returnedContacts.length; j++) {
+          const contact = returnedContacts[j];
+          const originalContact = batch[j];
+          contactMap.set(originalContact._key, contact.id);
+          contactMap.set(originalContact._boxKey, contact.id);
+        }
       } catch (error) {
-        console.error(`Failed to create contact for ${contactData.name}:`, error);
+        console.error(`Failed to create batch of contacts:`, error);
       }
     }
     
-    // Process boxes (deals)
+    // Process boxes (deals) in batches
     console.log("Creating deals...");
     let dealsCreated = 0;
+    const dealsToInsert = [];
+    
+    // First collect all valid deals
     for (const record of boxesRecords) {
       // Find stage ID
       const stageId = stageMap.get(record.Stage);
       if (!stageId) {
-        console.error(`Stage not found: ${record.Stage}`);
+        console.log(`Stage not found: ${record.Stage}`);
         continue;
       }
       
       // Find related contact (by box key)
       const boxKey = record["Box Key"];
       if (!boxKey) {
-        console.error(`No box key for deal: ${record.Name}`);
+        console.log(`No box key for deal: ${record.Name}`);
         continue;
       }
       
       const contactId = contactMap.get(boxKey);
       
       if (!contactId) {
-        console.error(`Contact not found for box key: ${boxKey}`);
+        console.log(`Contact not found for box key: ${boxKey}`);
         continue;
       }
       
@@ -191,11 +215,20 @@ export async function loadInitialData() {
         tags: []
       };
       
+      dealsToInsert.push(dealData);
+    }
+    
+    // Process in batches of 50
+    const DEALS_BATCH_SIZE = 50;
+    for (let i = 0; i < dealsToInsert.length; i += DEALS_BATCH_SIZE) {
+      const batch = dealsToInsert.slice(i, i + DEALS_BATCH_SIZE);
+      console.log(`Processing deals batch ${i/DEALS_BATCH_SIZE + 1}/${Math.ceil(dealsToInsert.length/DEALS_BATCH_SIZE)}`);
+      
       try {
-        await db.insert(deals).values(dealData);
-        dealsCreated++;
+        await db.insert(deals).values(batch);
+        dealsCreated += batch.length;
       } catch (error) {
-        console.error(`Failed to create deal for ${dealData.name}:`, error);
+        console.error(`Failed to create batch of deals:`, error);
       }
     }
     
