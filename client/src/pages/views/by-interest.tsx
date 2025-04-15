@@ -22,7 +22,12 @@ const ByInterestPage: React.FC = () => {
   });
   
   // Get unique interest values from deals
-  const interestValues = ['all', ...new Set(deals.map(deal => deal.interest).filter(Boolean))];
+  const uniqueInterestValues = Array.from(
+    new Set(
+      deals.map(deal => deal.interest || '').filter(interest => interest !== '')
+    )
+  ) as string[];
+  const interestValues = ['all', ...uniqueInterestValues];
   
   // Filter deals by interest
   const filteredDeals = selectedInterest === 'all' 

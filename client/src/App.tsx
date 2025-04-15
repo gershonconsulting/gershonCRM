@@ -11,7 +11,7 @@ import Settings from "@/pages/settings";
 import AdminPage from "@/pages/admin";
 import ByFit from "@/pages/views/by-fit";
 import ByInterest from "@/pages/views/by-interest";
-import ByWeek from "@/pages/views/by-week";
+import ByMonth from "@/pages/views/by-month";
 
 function Router() {
   return (
@@ -23,7 +23,7 @@ function Router() {
       <Route path="/adminpanel" component={AdminPage} />
       <Route path="/views/by-fit" component={ByFit} />
       <Route path="/views/by-interest" component={ByInterest} />
-      <Route path="/views/by-week" component={ByWeek} />
+      <Route path="/views/by-month" component={ByMonth} />
       <Route component={NotFound} />
     </Switch>
   );

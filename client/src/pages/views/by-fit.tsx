@@ -22,7 +22,12 @@ const ByFitPage: React.FC = () => {
   });
   
   // Get unique fit values from deals
-  const fitValues = ['all', ...new Set(deals.map(deal => deal.fit).filter(Boolean))];
+  const uniqueFitValues = Array.from(
+    new Set(
+      deals.map(deal => deal.fit || '').filter(fit => fit !== '')
+    )
+  ) as string[];
+  const fitValues = ['all', ...uniqueFitValues];
   
   // Filter deals by fit
   const filteredDeals = selectedFit === 'all' 
