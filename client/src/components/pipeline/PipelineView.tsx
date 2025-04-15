@@ -174,15 +174,15 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
       <div className="mt-6">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-12"><Checkbox /></TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Contacts and organizations</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Thread</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead>Done</TableHead>
+            <TableRow className="text-xs">
+              <TableHead className="w-12 py-1"><Checkbox /></TableHead>
+              <TableHead className="py-1">Name</TableHead>
+              <TableHead className="py-1">Contacts and organizations</TableHead>
+              <TableHead className="py-1">Stage</TableHead>
+              <TableHead className="py-1">Source</TableHead>
+              <TableHead className="py-1">Thread</TableHead>
+              <TableHead className="py-1">Notes</TableHead>
+              <TableHead className="py-1">Done</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -221,23 +221,23 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
                   {stageDeals.map(deal => (
                     <TableRow 
                       key={deal.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-gray-50 text-xs"
                       onClick={() => handleDealClick(deal)}
                     >
-                      <TableCell><Checkbox /></TableCell>
-                      <TableCell>{deal.name}</TableCell>
-                      <TableCell>{deal.contact?.name || deal.contact?.company || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-1"><Checkbox /></TableCell>
+                      <TableCell className="py-1 font-medium">{deal.name}</TableCell>
+                      <TableCell className="py-1">{deal.contact?.name || deal.contact?.company || '-'}</TableCell>
+                      <TableCell className="py-1">
                         <div className="flex items-center">
                           <div 
-                            className="w-3 h-3 rounded-sm mr-2"
+                            className="w-2 h-2 rounded-sm mr-1"
                             style={{ backgroundColor: stageColors[stage.name as keyof typeof stageColors] || stage.color }}
                           />
                           {stage.name}
                         </div>
                       </TableCell>
-                      <TableCell>{deal.source || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-1">{deal.source || '-'}</TableCell>
+                      <TableCell className="py-1">
                         {deal.thread ? (
                           <a 
                             href={deal.thread} 
@@ -250,8 +250,8 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
                           </a>
                         ) : '-'}
                       </TableCell>
-                      <TableCell>{deal.notes || '-'}</TableCell>
-                      <TableCell><Checkbox checked={deal.done} /></TableCell>
+                      <TableCell className="py-1">{deal.notes || '-'}</TableCell>
+                      <TableCell className="py-1"><Checkbox checked={deal.done} /></TableCell>
                     </TableRow>
                   ))}
                 </React.Fragment>

@@ -65,10 +65,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             
             {/* Right side buttons */}
             <div className="ml-4 flex items-center md:ml-6">
-              {/* User Role Selector */}
-              <div className="mr-4">
-                <UserRoleSelector />
-              </div>
+
               
               {/* Version indicator */}
               <div className="mr-4 flex items-center">
