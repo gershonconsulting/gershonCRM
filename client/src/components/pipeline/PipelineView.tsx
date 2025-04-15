@@ -8,6 +8,8 @@ import DealDetailDialog from '@/components/deals/DealDetailDialog';
 import DealForm from '@/components/deals/DealForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { UserRole, useUserRole } from "@/hooks/use-user-role";
+import RoleBasedAccess from "@/components/auth/RoleBasedAccess";
 
 interface PipelineViewProps {
   onNewDeal?: () => void;
@@ -86,6 +88,8 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
     return acc;
   }, {} as Record<number, DealWithContact[]>);
 
+  const { role } = useUserRole();
+  
   return (
     <div className="mt-8">
       <div className="md:flex md:items-center md:justify-between">
@@ -99,10 +103,12 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button onClick={handleNewDeal}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Deal
-          </Button>
+          <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
+            <Button onClick={handleNewDeal}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Deal
+            </Button>
+          </RoleBasedAccess>
         </div>
       </div>
       
@@ -196,9 +202,19 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
                         <span className="font-medium">{stage.name}</span>
                         <span className="ml-2 text-gray-500">({stageDeals.length})</span>
                         <ChevronDown className="ml-2 h-4 w-4" />
-                        <Button variant="ghost" size="sm" className="ml-2">
-                          <Plus className="h-3 w-3 mr-1" /> Add Deal
-                        </Button>
+                        <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleNewDeal();
+                            }}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add Deal
+                          </Button>
+                        </RoleBasedAccess>
                       </div>
                     </TableCell>
                   </TableRow>
