@@ -52,9 +52,28 @@ const ContactDetailsCard: React.FC<ContactDetailsCardProps> = ({
 
   const handleSave = async () => {
     try {
+      // Find what fields changed and create a description
+      const changedFields = [];
+      for (const [key, value] of Object.entries(editedContact)) {
+        if (value !== contact[key as keyof Contact]) {
+          changedFields.push(`${key}: "${value}"`);
+        }
+      }
+      
       await apiRequest('PUT', `/api/contacts/${contact.id}`, editedContact);
+      
+      // Create an activity log for contact changes
+      if (changedFields.length > 0) {
+        await apiRequest('POST', '/api/activities', {
+          type: 'contact_update',
+          description: `Updated contact information: ${changedFields.join(', ')}`,
+          contactId: contact.id
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/activities'] });
       setIsEditing(false);
       if (onContactUpdated) onContactUpdated();
     } catch (error) {

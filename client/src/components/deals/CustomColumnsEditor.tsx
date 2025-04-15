@@ -28,15 +28,18 @@ const CustomColumnsEditor: React.FC<CustomColumnsEditorProps> = ({
   const [newColumnType, setNewColumnType] = useState('');
   const [newColumnValue, setNewColumnValue] = useState('');
   
-  // Preset options for Fit and Interest
+  // Preset options for Fit, Interest, and Next Steps
   const fitOptions = ['High', 'Medium', 'Low', 'Unknown'];
-  const interestOptions = [
-    'Antibody', 
-    'Chemistry', 
-    'AI/ML technology', 
-    'Target Discovery', 
-    'Software',
-    'Other'
+  const interestOptions = ['High', 'Medium', 'Low'];
+  const nextStepsOptions = [
+    'Reset LinkedIn',
+    'Schedule Call', 
+    'Send Proposal', 
+    'Schedule Demo', 
+    'Waiting for feedback', 
+    'Stand by',
+    'Send Calendly',
+    'Get email address'
   ];
 
   const handleUpdateField = async (field: keyof Deal, value: string) => {
@@ -45,7 +48,16 @@ const CustomColumnsEditor: React.FC<CustomColumnsEditorProps> = ({
         [field]: value 
       });
       
+      // Create an activity log for this change
+      await apiRequest('POST', '/api/activities', {
+        type: 'field_update',
+        description: `Updated ${field} to "${value}"`,
+        dealId: deal.id,
+        contactId: deal.contactId,
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/activities'] });
       if (onDealUpdated) onDealUpdated();
     } catch (error) {
       console.error(`Failed to update ${field}:`, error);
@@ -60,7 +72,16 @@ const CustomColumnsEditor: React.FC<CustomColumnsEditorProps> = ({
         [newColumnType]: newColumnValue 
       });
       
+      // Create an activity log for this new column
+      await apiRequest('POST', '/api/activities', {
+        type: 'column_added',
+        description: `Added ${newColumnType} column with value "${newColumnValue}"`,
+        dealId: deal.id,
+        contactId: deal.contactId,
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/activities'] });
       setIsAddingColumn(false);
       setNewColumnType('');
       setNewColumnValue('');
@@ -180,6 +201,25 @@ const CustomColumnsEditor: React.FC<CustomColumnsEditorProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+            ) : newColumnType === 'nextSteps' ? (
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Value</label>
+                <Select
+                  value={newColumnValue}
+                  onValueChange={setNewColumnValue}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Select next steps" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {nextStepsOptions.map(option => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : (
               <div>
                 <label className="text-xs text-gray-500 block mb-1">Value</label>
@@ -239,7 +279,7 @@ const CustomColumnsEditor: React.FC<CustomColumnsEditorProps> = ({
           </div>
         )}
         
-        {renderFieldEditor('nextSteps', 'Next Steps')}
+        {renderFieldEditor('nextSteps', 'Next Steps', nextStepsOptions)}
         {renderFieldEditor('fit', 'Fit', fitOptions)}
         {renderFieldEditor('interest', 'Interest', interestOptions)}
       </div>

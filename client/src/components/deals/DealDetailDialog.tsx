@@ -140,27 +140,15 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
     return name.charAt(0).toUpperCase();
   };
 
-  // Mock activities for the lead
-  const activities = [
-    { 
-      id: 1, 
-      type: 'email',
-      description: 'Sent initial outreach email',
-      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
-    },
-    { 
-      id: 2, 
-      type: 'call',
-      description: 'Scheduled a call for next week',
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
-    },
-    { 
-      id: 3, 
-      type: 'note',
-      description: 'Added contact information from LinkedIn',
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+  // Fetch deal's activities
+  const { data: activities = [] } = useQuery<ActivityWithRelations[]>({
+    queryKey: ['/api/activities', deal.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/activities?dealId=${deal.id}`);
+      if (!response.ok) throw new Error('Failed to fetch activities');
+      return response.json();
     }
-  ];
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -237,10 +225,14 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
                               <div className="flex justify-between">
                                 <p className="text-sm font-medium">
                                   {activity.type === 'email' ? 'Email Sent' : 
-                                   activity.type === 'call' ? 'Call Scheduled' : 'Note Added'}
+                                   activity.type === 'call' ? 'Call Scheduled' : 
+                                   activity.type === 'deal_update' ? 'Stage Changed' :
+                                   activity.type === 'field_update' ? 'Field Updated' :
+                                   activity.type === 'column_added' ? 'Column Added' :
+                                   activity.type === 'contact_update' ? 'Contact Updated' : 'Activity'}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {format(activity.date, 'MMM d, yyyy')}
+                                  {format(new Date(activity.createdAt), 'MMM d, yyyy')}
                                 </p>
                               </div>
                               <p className="text-sm text-gray-700 mt-1">
