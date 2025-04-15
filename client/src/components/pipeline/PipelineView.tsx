@@ -192,27 +192,27 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
               
               return (
                 <React.Fragment key={stage.id}>
-                  <TableRow className="group bg-gray-50">
-                    <TableCell colSpan={8} className="py-2">
+                  <TableRow className="group bg-gray-50 text-xs">
+                    <TableCell colSpan={8} className="py-1">
                       <div className="flex items-center">
                         <div 
-                          className="w-4 h-4 rounded-sm mr-2"
+                          className="w-3 h-3 rounded-sm mr-1"
                           style={{ backgroundColor: stageColors[stage.name as keyof typeof stageColors] || stage.color }}
                         />
                         <span className="font-medium">{stage.name}</span>
-                        <span className="ml-2 text-gray-500">({stageDeals.length})</span>
-                        <ChevronDown className="ml-2 h-4 w-4" />
+                        <span className="ml-1 text-gray-500">({stageDeals.length})</span>
+                        <ChevronDown className="ml-1 h-3 w-3" />
                         <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
                           <Button 
                             variant="ghost" 
-                            size="sm" 
-                            className="ml-2"
+                            size="xs" 
+                            className="ml-1 h-6 px-2 py-0 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleNewDeal();
                             }}
                           >
-                            <Plus className="h-3 w-3 mr-1" /> Add Deal
+                            <Plus className="h-2 w-2 mr-1" /> Add
                           </Button>
                         </RoleBasedAccess>
                       </div>
@@ -251,7 +251,7 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
                         ) : '-'}
                       </TableCell>
                       <TableCell className="py-1">{deal.notes || '-'}</TableCell>
-                      <TableCell className="py-1"><Checkbox checked={deal.done} /></TableCell>
+                      <TableCell className="py-1">{deal.done !== null && <Checkbox checked={Boolean(deal.done)} />}</TableCell>
                     </TableRow>
                   ))}
                 </React.Fragment>
