@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Contacts from "@/pages/contacts";
-import Emails from "@/pages/emails";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import ByFit from "@/pages/views/by-fit";
@@ -17,7 +16,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/contacts" component={Contacts} />
-      <Route path="/emails" component={Emails} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
       <Route path="/views/by-fit" component={ByFit} />
