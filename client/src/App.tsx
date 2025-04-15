@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Contacts from "@/pages/contacts";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import AdminPage from "@/pages/admin";
 import ByFit from "@/pages/views/by-fit";
 import ByInterest from "@/pages/views/by-interest";
 import ByWeek from "@/pages/views/by-week";

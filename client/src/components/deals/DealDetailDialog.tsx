@@ -22,7 +22,9 @@ import {
   DollarSign, 
   PieChart, 
   ExternalLink,
-  Plus
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { 
   Tabs, 
@@ -44,6 +46,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { UserRole, useUserRole } from '@/hooks/use-user-role';
+import RoleBasedAccess from '@/components/auth/RoleBasedAccess';
 
 interface DealDetailDialogProps {
   deal: DealWithContact;
@@ -138,9 +142,25 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
-              <Button size="sm" onClick={onEdit}>
-                Edit
-              </Button>
+              <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={onEdit}
+                  className="flex items-center"
+                >
+                  <Pencil className="h-3 w-3 mr-1" /> Edit
+                </Button>
+              </RoleBasedAccess>
+              <RoleBasedAccess allowedRoles={[UserRole.ADMIN]}>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="flex items-center"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" /> Delete
+                </Button>
+              </RoleBasedAccess>
             </div>
           </div>
         </DialogHeader>
