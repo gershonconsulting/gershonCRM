@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -9,9 +9,41 @@ import {
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Check, Circle } from 'lucide-react';
+import { 
+  Check, 
+  Circle, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Building, 
+  User, 
+  Link2, 
+  Calendar, 
+  DollarSign, 
+  PieChart, 
+  ExternalLink,
+  Plus
+} from 'lucide-react';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { DealWithContact } from '@shared/schema';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface DealDetailDialogProps {
   deal: DealWithContact;
@@ -26,6 +58,8 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
   onOpenChange,
   onEdit,
 }) => {
+  const [selectedTab, setSelectedTab] = useState('all');
+  
   // Format the value as currency
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -36,90 +70,322 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
   // Format date
   const formattedDate = format(new Date(deal.createdAt), 'MMM dd, yyyy');
 
-  // Badge variant based on stage color
-  const getBadgeVariant = (color: string) => {
-    const colorMap: Record<string, string> = {
-      'blue': 'info',
-      'indigo': 'indigo',
-      'purple': 'purple',
-      'pink': 'pink',
-      'green': 'success',
+  // Get stage style based on stage name
+  const getStageStyle = (stageName: string) => {
+    const stageStyleMap: Record<string, { color: string, bgColor: string }> = {
+      'Lead': { color: 'white', bgColor: '#FF5630' },
+      'Contacted': { color: 'white', bgColor: '#FCA44C' },
+      'Reccommend By QC': { color: 'white', bgColor: '#F39C12' },
+      'Call Scheduled': { color: 'white', bgColor: '#F1C40F' },
+      'Connected': { color: 'white', bgColor: '#2ECC71' },
+      'Engaged': { color: 'white', bgColor: '#27AE60' },
+      'Proposal Sent': { color: 'white', bgColor: '#3498DB' },
+      'WON': { color: 'white', bgColor: '#2980B9' },
+      'Later Stage': { color: 'white', bgColor: '#8E44AD' },
+      'Recycled': { color: 'white', bgColor: '#95A5A6' },
     };
-    return colorMap[color] || 'default';
+    
+    return stageStyleMap[stageName] || { color: 'white', bgColor: 'gray' };
+  };
+  
+  const stageStyle = getStageStyle(deal.stage.name);
+  const nextSteps = deal.nextSteps ? deal.nextSteps.split(',').map(step => step.trim()) : [];
+  
+  // Get first letter of name for avatar
+  const getInitials = (name: string) => {
+    return name.charAt(0).toUpperCase();
   };
 
-  const nextSteps = deal.nextSteps ? deal.nextSteps.split(',').map(step => step.trim()) : [];
+  // Mock activities for the lead
+  const activities = [
+    { 
+      id: 1, 
+      type: 'email',
+      description: 'Sent initial outreach email',
+      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+    },
+    { 
+      id: 2, 
+      type: 'call',
+      description: 'Scheduled a call for next week',
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+    },
+    { 
+      id: 3, 
+      type: 'note',
+      description: 'Added contact information from LinkedIn',
+      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+    }
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[80vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <DialogTitle>{deal.name}</DialogTitle>
-            <Badge variant={getBadgeVariant(deal.stage.color)}>
-              {deal.stage.name}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="text-xl">{deal.name}</DialogTitle>
+              <Badge 
+                style={{ 
+                  backgroundColor: stageStyle.bgColor, 
+                  color: stageStyle.color,
+                }}
+              >
+                {deal.stage.name}
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
+              <Button size="sm" onClick={onEdit}>
+                Edit
+              </Button>
+            </div>
           </div>
         </DialogHeader>
         
-        <div className="mt-4 border-t border-gray-200 pt-4">
-          <div className="flex justify-between mb-4">
-            <span className="text-sm font-medium text-gray-500">Deal Value</span>
-            <span className="text-sm font-medium text-gray-900">{formattedValue}</span>
+        <div className="flex mt-2">
+          <div className="w-2/3 pr-4">
+            <Tabs defaultValue="all" className="w-full" onValueChange={setSelectedTab}>
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="emails">Emails</TabsTrigger>
+                <TabsTrigger value="files">Files</TabsTrigger>
+                <TabsTrigger value="comments">Comments</TabsTrigger>
+                <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                <TabsTrigger value="logs">Call Logs</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all" className="mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Input placeholder="Add comment" className="flex-grow" />
+                  <Button size="sm">Send</Button>
+                </div>
+                
+                <Card>
+                  <CardContent className="pt-4">
+                    {activities.length > 0 ? (
+                      <div className="space-y-4">
+                        {activities.map((activity) => (
+                          <div key={activity.id} className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>U</AvatarFallback>
+                            </Avatar>
+                            
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <p className="text-sm font-medium">
+                                  {activity.type === 'email' ? 'Email Sent' : 
+                                   activity.type === 'call' ? 'Call Scheduled' : 'Note Added'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {format(activity.date, 'MMM d, yyyy')}
+                                </p>
+                              </div>
+                              <p className="text-sm text-gray-700 mt-1">
+                                {activity.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-gray-500 py-6">No activity yet</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="emails">
+                <p className="text-center text-gray-500 py-10">No emails yet</p>
+              </TabsContent>
+              
+              <TabsContent value="files">
+                <p className="text-center text-gray-500 py-10">No files uploaded</p>
+              </TabsContent>
+              
+              <TabsContent value="comments">
+                <p className="text-center text-gray-500 py-10">No comments yet</p>
+              </TabsContent>
+              
+              <TabsContent value="tasks">
+                <div className="p-4 border rounded-md mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Tasks</h3>
+                    <Button size="sm" variant="ghost">
+                      <Plus className="h-4 w-4 mr-1" /> Add Task
+                    </Button>
+                  </div>
+                  
+                  {nextSteps.length > 0 ? (
+                    <div className="space-y-2">
+                      {nextSteps.map((step, index) => (
+                        <div key={index} className="flex items-start">
+                          <Checkbox className="mt-1 mr-2" />
+                          <div>
+                            <p className="text-sm">{step}</p>
+                            <p className="text-xs text-gray-500">Due: {format(new Date(), 'MMM d, yyyy')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No tasks yet</p>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="logs">
+                <p className="text-center text-gray-500 py-10">No call logs yet</p>
+              </TabsContent>
+            </Tabs>
           </div>
-          <div className="flex justify-between mb-4">
-            <span className="text-sm font-medium text-gray-500">Probability</span>
-            <span className="text-sm font-medium text-gray-900">{deal.stage.probability}%</span>
-          </div>
-          <div className="flex justify-between mb-4">
-            <span className="text-sm font-medium text-gray-500">Contact</span>
-            <span className="text-sm font-medium text-gray-900">{deal.contact.name}</span>
-          </div>
-          <div className="flex justify-between mb-4">
-            <span className="text-sm font-medium text-gray-500">Created</span>
-            <span className="text-sm font-medium text-gray-900">{formattedDate}</span>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
-          <p className="text-sm text-gray-500">
-            {deal.description || "No description available."}
-          </p>
-        </div>
-        
-        <Separator />
-        
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Next Steps</h4>
-          {nextSteps.length > 0 ? (
-            nextSteps.map((step, index) => (
-              <div key={index} className="flex items-center text-sm mb-2">
-                {index < Math.min(2, nextSteps.length) ? (
-                  <Check className="h-4 w-4 text-gray-400 mr-2" />
-                ) : (
-                  <Circle className="h-4 w-4 text-gray-400 mr-2" />
+          
+          <div className="w-1/3 border-l pl-4">
+            <div className="mb-6">
+              <h3 className="text-sm font-medium mb-2 flex items-center justify-between">
+                <span>Stage</span>
+                <Badge 
+                  style={{ 
+                    backgroundColor: stageStyle.bgColor, 
+                    color: stageStyle.color,
+                  }}
+                >
+                  {deal.stage.name}
+                </Badge>
+              </h3>
+              
+              <Select defaultValue={deal.stage.id.toString()}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Lead</SelectItem>
+                  <SelectItem value="2">Contacted</SelectItem>
+                  <SelectItem value="3">Reccommend By QC</SelectItem>
+                  <SelectItem value="4">Call Scheduled</SelectItem>
+                  <SelectItem value="5">Connected</SelectItem>
+                  <SelectItem value="6">Engaged</SelectItem>
+                  <SelectItem value="7">Proposal Sent</SelectItem>
+                  <SelectItem value="8">WON</SelectItem>
+                  <SelectItem value="9">Later Stage</SelectItem>
+                  <SelectItem value="10">Recycled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Separator className="my-4" />
+            
+            <div className="mb-6">
+              <h3 className="text-sm font-medium mb-4 flex justify-between items-center">
+                <span>Custom Columns</span>
+                <Button size="sm" variant="ghost" className="h-7 px-2">
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500">Source</p>
+                  <p className="text-sm">{deal.source || 'Not specified'}</p>
+                </div>
+                
+                {deal.thread && (
+                  <div>
+                    <p className="text-xs text-gray-500">Thread</p>
+                    <a 
+                      href={deal.thread} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline flex items-center"
+                    >
+                      {deal.thread.substring(0, 30)}...
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
+                  </div>
                 )}
-                <span className={index < Math.min(2, nextSteps.length) ? 'text-gray-500 line-through' : 'text-gray-700'}>
-                  {step}
-                </span>
+                
+                <div>
+                  <p className="text-xs text-gray-500">Next Steps</p>
+                  <p className="text-sm">{deal.nextSteps || 'Not specified'}</p>
+                </div>
+                
+                <div>
+                  <p className="text-xs text-gray-500">Fit</p>
+                  <p className="text-sm">{deal.fit || 'Not specified'}</p>
+                </div>
+                
+                <div>
+                  <p className="text-xs text-gray-500">Interest</p>
+                  <p className="text-sm">{deal.interest || 'Not specified'}</p>
+                </div>
               </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No next steps defined.</p>
-          )}
+            </div>
+            
+            <Separator className="my-4" />
+            
+            <div>
+              <h3 className="text-sm font-medium mb-4 flex justify-between items-center">
+                <span>Contacts and organizations</span>
+                <Button size="sm" variant="ghost" className="h-7 px-2">
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </h3>
+              
+              <div className="p-3 border rounded-md mb-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getInitials(deal.contact.name)}</AvatarFallback>
+                  </Avatar>
+                  
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm font-medium">{deal.contact.name}</p>
+                      {deal.contact.email && <p className="text-xs text-gray-500">({deal.contact.email})</p>}
+                    </div>
+                    <p className="text-xs text-gray-500">{deal.contact.company}</p>
+                  </div>
+                </div>
+                
+                <div className="mt-2 space-y-1 pl-10">
+                  {deal.contact.position && (
+                    <p className="text-xs text-gray-600 flex items-center">
+                      <User className="h-3 w-3 mr-1 text-gray-400" />
+                      {deal.contact.position}
+                    </p>
+                  )}
+                  
+                  {deal.contact.email && (
+                    <p className="text-xs text-gray-600 flex items-center">
+                      <Mail className="h-3 w-3 mr-1 text-gray-400" />
+                      {deal.contact.email}
+                    </p>
+                  )}
+                  
+                  {deal.contact.phone && (
+                    <p className="text-xs text-gray-600 flex items-center">
+                      <Phone className="h-3 w-3 mr-1 text-gray-400" />
+                      {deal.contact.phone}
+                    </p>
+                  )}
+                  
+                  {deal.contact.linkedIn && (
+                    <a 
+                      href={deal.contact.linkedIn}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center"
+                    >
+                      <Link2 className="h-3 w-3 mr-1 text-gray-400" />
+                      LinkedIn Profile
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-          <Button onClick={onEdit}>
-            Edit Deal
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
