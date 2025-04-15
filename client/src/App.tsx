@@ -20,6 +20,7 @@ function Router() {
       <Route path="/contacts" component={Contacts} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
+      <Route path="/admin" component={AdminPage} />
       <Route path="/views/by-fit" component={ByFit} />
       <Route path="/views/by-interest" component={ByInterest} />
       <Route path="/views/by-week" component={ByWeek} />
