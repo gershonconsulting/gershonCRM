@@ -33,7 +33,7 @@ import {
   TabsTrigger 
 } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { DealStage, DealWithContact } from '@shared/schema';
+import { DealStage, DealWithContact, ActivityWithRelations } from '@shared/schema';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Select,
@@ -85,11 +85,11 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
       });
       
       // Create an activity for this stage change
-      const stage = stages.find(s => s.id === newStageId);
-      if (stage) {
+      const newStage = stages.find(s => s.id === newStageId);
+      if (newStage) {
         await apiRequest('POST', '/api/activities', {
           type: 'deal_update',
-          description: `Deal moved to ${stage.name} stage`,
+          description: `Changed stage from "${deal.stage.name}" to "${newStage.name}"`,
           dealId: deal.id,
           contactId: deal.contactId,
         });
