@@ -148,9 +148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contacts CRUD
   app.get(`${api}/contacts`, async (req, res) => {
     try {
+      console.log("Fetching contacts...");
       const contacts = await storage.getContacts();
+      console.log("Contacts fetched successfully:", contacts.length);
       res.json(contacts);
     } catch (error) {
+      console.error("Error fetching contacts:", error);
       res.status(500).json({ message: "Failed to fetch contacts" });
     }
   });
@@ -230,16 +233,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Deals CRUD
   app.get(`${api}/deals`, async (req, res) => {
     try {
+      console.log("Fetching deals...");
       const stageId = req.query.stageId ? parseInt(req.query.stageId as string) : undefined;
       
       if (stageId) {
+        console.log(`Fetching deals by stage ID: ${stageId}`);
         const deals = await storage.getDealsByStage(stageId);
+        console.log(`Deals fetched successfully for stage ${stageId}:`, deals.length);
         return res.json(deals);
       }
       
       const deals = await storage.getDeals();
+      console.log("All deals fetched successfully:", deals.length);
       res.json(deals);
     } catch (error) {
+      console.error("Error fetching deals:", error);
       res.status(500).json({ message: "Failed to fetch deals" });
     }
   });
@@ -414,22 +422,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Activities CRUD
   app.get(`${api}/activities`, async (req, res) => {
     try {
+      console.log("Fetching activities...");
       const contactId = req.query.contactId ? parseInt(req.query.contactId as string) : undefined;
       const dealId = req.query.dealId ? parseInt(req.query.dealId as string) : undefined;
       
       if (contactId) {
+        console.log(`Fetching activities by contact ID: ${contactId}`);
         const activities = await storage.getActivitiesByContact(contactId);
+        console.log(`Activities fetched successfully for contact ${contactId}:`, activities.length);
         return res.json(activities);
       }
       
       if (dealId) {
+        console.log(`Fetching activities by deal ID: ${dealId}`);
         const activities = await storage.getActivitiesByDeal(dealId);
+        console.log(`Activities fetched successfully for deal ${dealId}:`, activities.length);
         return res.json(activities);
       }
       
       const activities = await storage.getActivities();
+      console.log("All activities fetched successfully:", activities.length);
       res.json(activities);
     } catch (error) {
+      console.error("Error fetching activities:", error);
       res.status(500).json({ message: "Failed to fetch activities" });
     }
   });
@@ -708,9 +723,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           country: "",
           source: "Streak Import",
           linkedIn: record["LinkedIn"] || "",
-          twitterHandle: record["Twitter"] || "",
-          facebookHandle: record["Facebook"] || "",
-          instagramHandle: record["Instagram"] || "",
+          twitter: record["Twitter"] || "",
+          facebook: record["Facebook"] || "",
+          instagram: record["Instagram"] || "",
           status: "active",
           boxKey: record["Box Key"] || "",
           tags: []
