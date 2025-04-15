@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar/Sidebar';
-import { Search, Bell, Settings, HelpCircle, Menu } from 'lucide-react';
+import { Search, Bell, Settings, HelpCircle, Menu, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+
+// Application version - update this when making changes
+export const APP_VERSION = "1.01";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -60,6 +64,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             
             {/* Right side buttons */}
             <div className="ml-4 flex items-center md:ml-6">
+              {/* Version indicator */}
+              <div className="mr-4 flex items-center">
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 flex items-center gap-1 border-gray-200">
+                  <Tag className="h-3 w-3" />
+                  <span>v{APP_VERSION}</span>
+                </Badge>
+              </div>
+              
               <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
                 <Bell className="h-5 w-5" />
               </button>
