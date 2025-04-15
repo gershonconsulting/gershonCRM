@@ -10,7 +10,7 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
-  role: text("role").default("user"),
+  role: text("role", { enum: ["client", "manager", "admin"] }).default("client"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastLogin: timestamp("last_login"),

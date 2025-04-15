@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar/Sidebar';
+import UserRoleSelector from '@/components/auth/UserRoleSelector';
 import { Search, Bell, Settings, HelpCircle, Menu, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             
             {/* Right side buttons */}
             <div className="ml-4 flex items-center md:ml-6">
+              {/* User Role Selector */}
+              <div className="mr-4">
+                <UserRoleSelector />
+              </div>
+              
               {/* Version indicator */}
               <div className="mr-4 flex items-center">
                 <Badge variant="outline" className="bg-gray-50 text-gray-700 flex items-center gap-1 border-gray-200">
