@@ -4,7 +4,7 @@ import { DealWithContact } from '@shared/schema';
 import MainLayout from '@/layouts/MainLayout';
 import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
-import { Filter, CircleAlert, Beaker, Microscope, Brain, Target, Code } from 'lucide-react';
+import { Filter, CircleAlert, Beaker, Microscope, Brain, Target, Code, HelpCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -13,9 +13,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const ByInterestPage: React.FC = () => {
   const [selectedInterest, setSelectedInterest] = useState<string>('all');
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([
+    'Antibody', 'Chemistry', 'AI/ML technology'
+  ]);
   
   // Fetch all deals
   const { data: deals = [], isLoading } = useQuery<DealWithContact[]>({
@@ -25,12 +30,38 @@ const ByInterestPage: React.FC = () => {
   // Use predefined interest values based on biotech categories
   const interestValues = ['all', 'Antibody', 'Chemistry', 'AI/ML technology', 'Target Discovery', 'Software', 'Unknown'];
   
+  // Main biotech interest categories for multi-select
+  const mainBiotechInterests = ['Antibody', 'Chemistry', 'AI/ML technology', 'Target Discovery', 'Software'];
+  
+  // Handle multiple interest selection
+  const handleInterestSelection = (interest: string) => {
+    if (interest === 'all') {
+      setSelectedInterest('all');
+      return;
+    }
+    
+    setSelectedInterest('custom');
+    
+    if (selectedInterests.includes(interest)) {
+      setSelectedInterests(selectedInterests.filter(i => i !== interest));
+    } else {
+      setSelectedInterests([...selectedInterests, interest]);
+    }
+  };
+  
   // Filter deals by interest
   const filteredDeals = selectedInterest === 'all' 
     ? deals 
-    : selectedInterest === 'Unknown'
-      ? deals.filter(deal => !deal.interest || deal.interest === '')
-      : deals.filter(deal => deal.interest === selectedInterest);
+    : selectedInterest === 'custom'
+      ? deals.filter(deal => {
+          if (selectedInterests.includes('Unknown') && (!deal.interest || deal.interest === '')) {
+            return true;
+          }
+          return deal.interest && selectedInterests.includes(deal.interest);
+        })
+      : selectedInterest === 'Unknown'
+        ? deals.filter(deal => !deal.interest || deal.interest === '')
+        : deals.filter(deal => deal.interest === selectedInterest);
   
   // Count deals by interest for display in badges
   const interestCounts = {
@@ -45,11 +76,12 @@ const ByInterestPage: React.FC = () => {
   
   // Define interest icons
   const interestIcons: Record<string, React.ReactNode> = {
-    'Antibody': <Microscope className="h-3 w-3 mr-1" />,
-    'Chemistry': <Beaker className="h-3 w-3 mr-1" />,
-    'AI/ML technology': <Brain className="h-3 w-3 mr-1" />,
-    'Target Discovery': <Target className="h-3 w-3 mr-1" />,
-    'Software': <Code className="h-3 w-3 mr-1" />
+    'Antibody': <Microscope className="h-4 w-4 mr-2 text-purple-600" />,
+    'Chemistry': <Beaker className="h-4 w-4 mr-2 text-blue-600" />,
+    'AI/ML technology': <Brain className="h-4 w-4 mr-2 text-green-600" />,
+    'Target Discovery': <Target className="h-4 w-4 mr-2 text-yellow-600" />,
+    'Software': <Code className="h-4 w-4 mr-2 text-pink-600" />,
+    'Unknown': <HelpCircle className="h-4 w-4 mr-2 text-gray-400" />
   };
   
   // Define interest colors for badges
@@ -60,7 +92,8 @@ const ByInterestPage: React.FC = () => {
     'Target Discovery': 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
     'Software': 'bg-pink-100 text-pink-800 hover:bg-pink-200',
     'Unknown': 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    'all': 'bg-primary/10 text-primary hover:bg-primary/20'
+    'all': 'bg-primary/10 text-primary hover:bg-primary/20',
+    'custom': 'bg-violet-100 text-violet-800 hover:bg-violet-200'
   };
     
   return (
@@ -93,6 +126,27 @@ const ByInterestPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Multiple interest selection */}
+        <div className="bg-gray-50 p-4 rounded-md mb-6">
+          <h3 className="text-sm font-medium mb-3">Filter by multiple biotech categories:</h3>
+          <div className="flex flex-wrap gap-4">
+            {mainBiotechInterests.map(interest => (
+              <div key={interest} className="flex items-center gap-2">
+                <Checkbox 
+                  id={`interest-${interest}`} 
+                  checked={selectedInterests.includes(interest)}
+                  onCheckedChange={() => handleInterestSelection(interest)}
+                />
+                <Label htmlFor={`interest-${interest}`} className="flex items-center cursor-pointer">
+                  {interestIcons[interest as keyof typeof interestIcons]}
+                  {interest}
+                  <span className="ml-1 text-xs font-normal">({interestCounts[interest as keyof typeof interestCounts]})</span>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+        
         {/* Interest filter badges */}
         <div className="flex flex-wrap gap-2 mb-6">
           <Badge 
@@ -117,6 +171,15 @@ const ByInterestPage: React.FC = () => {
               <span className="ml-1 text-xs font-normal">({interestCounts[interest as keyof typeof interestCounts]})</span>
             </Badge>
           ))}
+          {selectedInterest === 'custom' && (
+            <Badge 
+              variant="outline" 
+              className={`${interestColors.custom} cursor-pointer px-3 py-1`}
+            >
+              Multiple Categories
+              <span className="ml-1 text-xs font-normal">({filteredDeals.length})</span>
+            </Badge>
+          )}
         </div>
         
         {isLoading ? (

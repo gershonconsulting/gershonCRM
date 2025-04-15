@@ -4,7 +4,7 @@ import { DealWithContact } from '@shared/schema';
 import MainLayout from '@/layouts/MainLayout';
 import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
-import { Filter, CircleAlert } from 'lucide-react';
+import { Filter, CircleAlert, ArrowUpCircle, MinusCircle, ArrowDownCircle, HelpCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -13,9 +13,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const ByFitPage: React.FC = () => {
   const [selectedFit, setSelectedFit] = useState<string>('all');
+  const [selectedFits, setSelectedFits] = useState<string[]>(['High', 'Medium', 'Low']);
   
   // Fetch all deals
   const { data: deals = [], isLoading } = useQuery<DealWithContact[]>({
@@ -25,12 +28,35 @@ const ByFitPage: React.FC = () => {
   // Use High, Medium, Low fit values as specified
   const fitValues = ['all', 'High', 'Medium', 'Low', 'Unknown'];
   
+  // Handle multiple fit selection
+  const handleFitSelection = (fit: string) => {
+    if (fit === 'all') {
+      setSelectedFit('all');
+      return;
+    }
+    
+    setSelectedFit('custom');
+    
+    if (selectedFits.includes(fit)) {
+      setSelectedFits(selectedFits.filter(f => f !== fit));
+    } else {
+      setSelectedFits([...selectedFits, fit]);
+    }
+  };
+  
   // Filter deals by fit
   const filteredDeals = selectedFit === 'all' 
     ? deals 
-    : selectedFit === 'Unknown'
-      ? deals.filter(deal => !deal.fit || deal.fit === '')
-      : deals.filter(deal => deal.fit === selectedFit);
+    : selectedFit === 'custom'
+      ? deals.filter(deal => {
+          if (selectedFits.includes('Unknown') && (!deal.fit || deal.fit === '')) {
+            return true;
+          }
+          return deal.fit && selectedFits.includes(deal.fit);
+        })
+      : selectedFit === 'Unknown'
+        ? deals.filter(deal => !deal.fit || deal.fit === '')
+        : deals.filter(deal => deal.fit === selectedFit);
 
   // Count deals by fit for display in badges
   const fitCounts = {
@@ -47,7 +73,16 @@ const ByFitPage: React.FC = () => {
     Medium: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
     Low: 'bg-red-100 text-red-800 hover:bg-red-200',
     Unknown: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    all: 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+    all: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+    custom: 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+  };
+
+  // Define fit icons
+  const fitIcons: Record<string, React.ReactNode> = {
+    High: <ArrowUpCircle className="h-4 w-4 mr-2 text-green-600" />,
+    Medium: <MinusCircle className="h-4 w-4 mr-2 text-yellow-600" />,
+    Low: <ArrowDownCircle className="h-4 w-4 mr-2 text-red-600" />,
+    Unknown: <HelpCircle className="h-4 w-4 mr-2 text-gray-400" />
   };
     
   return (
@@ -79,6 +114,27 @@ const ByFitPage: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Multiple fit selection */}
+        <div className="bg-gray-50 p-4 rounded-md mb-6">
+          <h3 className="text-sm font-medium mb-3">Filter by multiple fit categories:</h3>
+          <div className="flex flex-wrap gap-4">
+            {['High', 'Medium', 'Low'].map(fit => (
+              <div key={fit} className="flex items-center gap-2">
+                <Checkbox 
+                  id={`fit-${fit}`} 
+                  checked={selectedFits.includes(fit)}
+                  onCheckedChange={() => handleFitSelection(fit)}
+                />
+                <Label htmlFor={`fit-${fit}`} className="flex items-center cursor-pointer">
+                  {fitIcons[fit as keyof typeof fitIcons]}
+                  {fit}
+                  <span className="ml-1 text-xs font-normal">({fitCounts[fit as keyof typeof fitCounts]})</span>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
         
         {/* Fit filter badges */}
         <div className="flex flex-wrap gap-2 mb-6">
@@ -86,13 +142,22 @@ const ByFitPage: React.FC = () => {
             <Badge 
               key={fit}
               variant="outline" 
-              className={`${selectedFit === fit ? fitColors[fit] || '' : 'bg-white hover:bg-gray-50'} cursor-pointer px-3 py-1`}
+              className={`${selectedFit === fit ? fitColors[fit as keyof typeof fitColors] || '' : 'bg-white hover:bg-gray-50'} cursor-pointer px-3 py-1`}
               onClick={() => setSelectedFit(fit)}
             >
               {fit === 'all' ? 'All' : fit} 
               <span className="ml-1 text-xs font-normal">({fitCounts[fit as keyof typeof fitCounts]})</span>
             </Badge>
           ))}
+          {selectedFit === 'custom' && (
+            <Badge 
+              variant="outline" 
+              className={`${fitColors.custom} cursor-pointer px-3 py-1`}
+            >
+              Custom
+              <span className="ml-1 text-xs font-normal">({filteredDeals.length})</span>
+            </Badge>
+          )}
         </div>
         
         {isLoading ? (
