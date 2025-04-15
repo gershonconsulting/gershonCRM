@@ -27,7 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
 
   const mainMenu = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { name: 'Contacts', path: '/contacts', icon: <Users className="h-5 w-5" /> },
+    { name: 'Views', path: '/views/by-fit', icon: <PieChart className="h-5 w-5" /> },
     { name: 'Reports', path: '/reports', icon: <PieChart className="h-5 w-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="h-5 w-5" /> },
   ];
@@ -82,55 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
             );
           })}
           
-          {/* Views section with dropdown */}
-          <div className="pt-2">
-            <button
-              onClick={() => isOpen && setViewsOpen(!viewsOpen)}
-              className={`w-full flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md
-                ${location.startsWith('/views') 
-                  ? 'text-primary'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`
-              }
-            >
-              <div className="flex items-center">
-                <div className="mr-3">
-                  <PieChart className="h-5 w-5" />
-                </div>
-                {isOpen && <span>Views</span>}
-              </div>
-              {isOpen && (
-                <div className="text-gray-400">
-                  {viewsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </div>
-              )}
-            </button>
-            
-            {/* Views submenu */}
-            {isOpen && viewsOpen && (
-              <div className="ml-4 mt-1 space-y-1">
-                {viewsMenu.map((item) => {
-                  const isActive = location === item.path;
-                  return (
-                    <Link 
-                      key={item.path}
-                      href={item.path}
-                      onClick={handleLinkClick}
-                      className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group
-                        ${isActive 
-                          ? 'text-white bg-primary' 
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                        }`
-                      }
-                    >
-                      <div className="mr-3">{item.icon}</div>
-                      {isOpen && <span>{item.name}</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {/* Views dropdown remains hidden since we now have a main navigation item for it */}
         </nav>
       </div>
       

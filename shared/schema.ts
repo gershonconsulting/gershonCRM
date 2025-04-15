@@ -33,18 +33,20 @@ export const contacts = pgTable("contacts", {
   email: text("email"),
   phone: text("phone"),
   company: text("company").notNull(), // Box Name in Streak
-  position: text("position"), // Title in Streak
+  position: text("position"), // Title in Streak (Role in UI)
   notes: text("notes"),
   linkedIn: text("linked_in"),
-  address: text("address"), // City, State, Country from Streak
+  twitter: text("twitter"), // Twitter handle
+  facebook: text("facebook"), // Facebook handle
+  instagram: text("instagram"), // Instagram handle
+  website: text("website"), // Personal or company website
+  location: text("location"), // Location display (e.g. San Francisco, California)
+  address: text("address"), // Address details
   city: text("city"),
   state: text("state"),
   country: text("country"),
   source: text("source"), // Source from Streak
   status: text("status").default("active"),
-  twitterHandle: text("twitter_handle"),
-  facebookHandle: text("facebook_handle"),
-  instagramHandle: text("instagram_handle"),
   domain: text("domain"), // Company domain
   tags: text("tags").array(),
   createdAt: timestamp("created_at").notNull().defaultNow(),

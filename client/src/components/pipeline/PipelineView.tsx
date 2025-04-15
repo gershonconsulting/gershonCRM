@@ -107,7 +107,7 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
       </div>
       
       {/* Pipeline Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-6">
         <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500 mb-1">Total Active Deals</p>
           <p className="text-2xl font-bold">{deals.length}</p>
@@ -129,20 +129,6 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
             <span className="text-green-600 flex items-center">
               <ArrowUp className="h-3 w-3 mr-1" />
               12.5%
-            </span>
-            <span className="ml-1 text-gray-500">vs previous month</span>
-          </div>
-        </div>
-        
-        <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500 mb-1">Pipeline Value</p>
-          <p className="text-2xl font-bold">
-            ${deals.reduce((sum, deal) => sum + (deal.value || 0), 0).toLocaleString()}
-          </p>
-          <div className="mt-2 flex items-center text-xs">
-            <span className="text-red-600 flex items-center">
-              <ArrowDown className="h-3 w-3 mr-1" />
-              2.1%
             </span>
             <span className="ml-1 text-gray-500">vs previous month</span>
           </div>
