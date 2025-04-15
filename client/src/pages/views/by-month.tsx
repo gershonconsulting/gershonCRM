@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DealWithContact } from '@shared/schema';
 import MainLayout from '@/layouts/MainLayout';
-import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
-import { Filter, CalendarIcon } from 'lucide-react';
+import { Filter, ChevronDown, Plus, Checkbox } from 'lucide-react';
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 export default function ByMonth() {
   // Create month options for the last 12 months
@@ -36,7 +36,7 @@ export default function ByMonth() {
   // Find the selected month object
   const selectedMonthObj = monthOptions.find(month => month.value === selectedMonth);
 
-  // Filter deals by creation month
+  // Filter and group deals by month
   const filteredDeals = selectedMonthObj
     ? deals.filter(deal => {
         const dealDate = new Date(deal.createdAt);
@@ -51,15 +51,14 @@ export default function ByMonth() {
     <MainLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Deals By Creation Month</h1>
-
+          <h1 className="text-2xl font-semibold text-gray-900">Deals By Month</h1>
+          
           <div className="flex gap-3">
             <Select
               value={selectedMonth}
               onValueChange={setSelectedMonth}
             >
               <SelectTrigger className="w-[180px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="Select Month" />
               </SelectTrigger>
               <SelectContent>
@@ -78,19 +77,39 @@ export default function ByMonth() {
           </div>
         </div>
 
-        <div className="mb-6 bg-white rounded-md p-4 shadow-sm border border-gray-200">
-          <div className="text-sm text-gray-600">
-            <p>Showing <span className="font-semibold">{filteredDeals.length}</span> deals created in <span className="font-semibold">{selectedMonthObj?.label}</span></p>
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-4 py-2 border-b border-gray-200">
+            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-500">
+              <div className="col-span-1"></div>
+              <div className="col-span-4">Name</div>
+              <div className="col-span-3">Stage</div>
+              <div className="col-span-4">Contacts and organizations</div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-gray-200">
+            {filteredDeals.map((deal) => (
+              <div key={deal.id} className="px-4 py-2 hover:bg-gray-50">
+                <div className="grid grid-cols-12 gap-4 items-center text-sm">
+                  <div className="col-span-1">
+                    <Checkbox />
+                  </div>
+                  <div className="col-span-4">{deal.name}</div>
+                  <div className="col-span-3 flex items-center">
+                    <div 
+                      className="w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: deal.stage?.color }}
+                    />
+                    {deal.stage?.name}
+                  </div>
+                  <div className="col-span-4">
+                    {deal.contact?.name || deal.contact?.company || '-'}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <PipelineView filteredDeals={filteredDeals} />
-        )}
       </div>
     </MainLayout>
   );
