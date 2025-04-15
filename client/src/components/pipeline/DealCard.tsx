@@ -39,8 +39,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onClick }) => {
   // No monetary values displayed
 
   // Badge variant based on stage color
-  const getBadgeVariant = (color: string) => {
-    const colorMap: Record<string, string> = {
+  const getBadgeVariant = (color: string): "default" | "info" | "indigo" | "purple" | "pink" | "success" | "secondary" | "destructive" | "outline" | "warning" | null | undefined => {
+    const colorMap: Record<string, "default" | "info" | "indigo" | "purple" | "pink" | "success" | "secondary" | "destructive" | "outline" | "warning"> = {
       'blue': 'info',
       'indigo': 'indigo',
       'purple': 'purple',
@@ -71,7 +71,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onClick }) => {
           </Avatar>
           <span className="ml-1.5 text-xs text-gray-500">{deal.contact.name}</span>
         </div>
-        <Badge variant={getBadgeVariant(deal.stage.color)}>
+        <Badge variant={getBadgeVariant(deal.stage.color || 'default')}>
           {deal.stage.name}
         </Badge>
       </div>

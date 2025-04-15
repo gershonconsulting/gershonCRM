@@ -11,7 +11,7 @@ interface PipelineColumnProps {
   count: number;
   value: number;
   probability: number;
-  color: string;
+  color: string;  // This needs to be typed as string since it comes from the database
   deals: DealWithContact[];
   onDealClick: (deal: DealWithContact) => void;
 }
@@ -33,8 +33,8 @@ const PipelineColumn: React.FC<PipelineColumnProps> = ({
   // No monetary values displayed
 
   // Badge variant based on color
-  const getBadgeVariant = (color: string) => {
-    const colorMap: Record<string, string> = {
+  const getBadgeVariant = (color: string): "default" | "info" | "indigo" | "purple" | "pink" | "success" | "secondary" | "destructive" | "outline" | "warning" | null | undefined => {
+    const colorMap: Record<string, "default" | "info" | "indigo" | "purple" | "pink" | "success" | "secondary" | "destructive" | "outline" | "warning"> = {
       'blue': 'info',
       'indigo': 'indigo',
       'purple': 'purple',
