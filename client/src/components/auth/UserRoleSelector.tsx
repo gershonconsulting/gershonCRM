@@ -1,83 +1,110 @@
 import React from "react";
-import { useUserRole, UserRole } from "@/hooks/use-user-role";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { UserRole, useUserRole } from "@/hooks/use-user-role";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { User } from "@shared/schema";
 
-const userOptions = [
-  { name: "Zachary", role: UserRole.CLIENT },
-  { name: "Vincent", role: UserRole.CLIENT },
-  { name: "Joseph", role: UserRole.MANAGER },
-  { name: "Aina", role: UserRole.MANAGER },
-  { name: "Winnie", role: UserRole.MANAGER },
-  { name: "Olivier", role: UserRole.ADMIN }
-];
-
+// Role badge colors
 const roleColors: Record<UserRole, string> = {
   [UserRole.CLIENT]: "bg-blue-100 text-blue-800 border-blue-200",
   [UserRole.MANAGER]: "bg-green-100 text-green-800 border-green-200",
   [UserRole.ADMIN]: "bg-purple-100 text-purple-800 border-purple-200"
 };
 
-const UserRoleSelector: React.FC = () => {
-  const { setCurrentUser, role, username } = useUserRole();
+// Sample users for the demonstration
+const usersByRole: Record<UserRole, string[]> = {
+  [UserRole.CLIENT]: ["Zachary", "Vincent"],
+  [UserRole.MANAGER]: ["Joseph", "Aina", "Winnie"],
+  [UserRole.ADMIN]: ["Olivier"]
+};
 
-  const handleUserChange = (selectedUsername: string) => {
-    const selectedUser = userOptions.find(u => u.name.toLowerCase() === selectedUsername.toLowerCase());
-    if (selectedUser) {
-      // In a real app, we would get the user data from the backend
-      // Here we're simulating by creating a mock user object
-      setCurrentUser({
-        id: 1,
-        username: selectedUser.name.toLowerCase(),
-        email: `${selectedUser.name.toLowerCase()}@example.com`,
-        role: selectedUser.role,
-        password: "",
-        firstName: selectedUser.name,
-        lastName: "",
-        isActive: true,
-        createdAt: new Date(),
-        lastLogin: null,
-        company: null,
-        position: null
-      });
-    }
+const UserRoleSelector: React.FC = () => {
+  const { role, setCurrentUser } = useUserRole();
+
+  const handleRoleChange = (newRole: string) => {
+    const userRole = newRole as UserRole;
+    // Create a minimal user object with the selected role
+    const user = {
+      id: 1,
+      username: usersByRole[userRole][0], // Use the first user of that role
+    } as User;
+    
+    setCurrentUser(user);
+  };
+
+  const handleUserChange = (username: string) => {
+    if (!role) return;
+    
+    // Create a minimal user object with the selected username but same role
+    const user = {
+      id: 1,
+      username,
+    } as User;
+    
+    setCurrentUser(user);
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <span className="text-sm text-gray-500">User:</span>
-      <Select
-        value={username?.toLowerCase() || ""}
-        onValueChange={handleUserChange}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select a user" />
-        </SelectTrigger>
-        <SelectContent>
-          {userOptions.map((user) => (
-            <SelectItem key={user.name.toLowerCase()} value={user.name.toLowerCase()}>
-              <div className="flex items-center justify-between w-full">
-                <span>{user.name}</span>
-                <Badge className={`ml-2 ${roleColors[user.role]}`}>
-                  {user.role}
-                </Badge>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {role && (
-        <Badge className={`${roleColors[role]}`}>
-          {role}
-        </Badge>
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>User Role Simulation</CardTitle>
+        <CardDescription>
+          Change your role to test different permission levels
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="text-sm font-medium mb-2">Current Role:</p>
+          {role && (
+            <Badge className={roleColors[role]}>
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </Badge>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Switch Role:</p>
+          <Select onValueChange={handleRoleChange} value={role || undefined}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Available Roles</SelectLabel>
+                <SelectItem value={UserRole.CLIENT}>Client</SelectItem>
+                <SelectItem value={UserRole.MANAGER}>Manager</SelectItem>
+                <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {role && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Switch User:</p>
+            <Select 
+              onValueChange={handleUserChange} 
+              defaultValue={usersByRole[role][0]}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a user" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Available Users</SelectLabel>
+                  {usersByRole[role].map((user) => (
+                    <SelectItem key={user} value={user}>
+                      {user}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

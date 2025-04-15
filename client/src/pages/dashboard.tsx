@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UserPlus, Plus } from 'lucide-react';
+import { UserPlus, Plus, User, Settings } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import ActivityFeed from '@/components/activity/ActivityFeed';
@@ -8,6 +8,9 @@ import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
 import DealForm from '@/components/deals/DealForm';
 import ContactForm from '@/components/contacts/ContactForm';
+import UserRoleSelector from '@/components/auth/UserRoleSelector';
+import { UserRole, useUserRole } from '@/hooks/use-user-role';
+import RoleBasedAccess from '@/components/auth/RoleBasedAccess';
 
 const Dashboard: React.FC = () => {
   const [isDealFormOpen, setIsDealFormOpen] = useState(false);
@@ -38,31 +41,40 @@ const Dashboard: React.FC = () => {
             </h2>
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
-            <Button 
-              onClick={() => setIsDealFormOpen(true)}
-              className="ml-3"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Deal
-            </Button>
-            <Button 
-              onClick={() => setIsContactFormOpen(true)}
-              variant="secondary"
-              className="ml-3"
-            >
-              <UserPlus className="mr-2 h-4 w-4" />
-              New Contact
-            </Button>
+            <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
+              <Button 
+                onClick={() => setIsDealFormOpen(true)}
+                className="ml-3"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Deal
+              </Button>
+            </RoleBasedAccess>
+            <RoleBasedAccess allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]}>
+              <Button 
+                onClick={() => setIsContactFormOpen(true)}
+                variant="secondary"
+                className="ml-3"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                New Contact
+              </Button>
+            </RoleBasedAccess>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-1">
-          <StatCard 
-            title="New Contacts" 
-            value={isLoading ? "--" : (stats?.newContacts || 0)} 
-            change={24.7} 
-          />
+        {/* Stats Cards and Role Selector */}
+        <div className="mt-8 grid gap-5 grid-cols-1 sm:grid-cols-2">
+          <div>
+            <StatCard 
+              title="New Contacts" 
+              value={isLoading ? "--" : (stats?.newContacts || 0)} 
+              change={24.7} 
+            />
+          </div>
+          <div>
+            <UserRoleSelector />
+          </div>
         </div>
 
         {/* Pipeline View */}

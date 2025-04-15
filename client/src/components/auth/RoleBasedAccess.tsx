@@ -1,42 +1,33 @@
-import React from "react";
-import { useUserRole, UserRole } from "@/hooks/use-user-role";
+import React, { ReactNode } from "react";
+import { UserRole, useUserRole } from "@/hooks/use-user-role";
 
 interface RoleBasedAccessProps {
-  children: React.ReactNode;
   allowedRoles: UserRole[];
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
- * Component that conditionally renders children based on user role
+ * Component that conditionally renders its children based on the user's role
  * 
- * @param children - Content to show if user has access
- * @param allowedRoles - Array of roles that are allowed to access the children
- * @param fallback - Optional content to show if user does not have access
+ * @param allowedRoles - Array of roles that are allowed to view the content
+ * @param children - The content to render if the user has permission
+ * @param fallback - Optional content to render if the user doesn't have permission
  */
 const RoleBasedAccess: React.FC<RoleBasedAccessProps> = ({
-  children,
   allowedRoles,
+  children,
   fallback = null
 }) => {
-  const { role } = useUserRole();
+  const { role, hasAccess } = useUserRole();
   
-  if (!role) {
-    return <>{fallback}</>;
-  }
+  // If no role is set, don't render anything
+  if (!role) return null;
   
-  const hasRequiredRole = allowedRoles.some(requiredRole => {
-    if (requiredRole === UserRole.CLIENT) {
-      return true; // All roles have client access
-    } else if (requiredRole === UserRole.MANAGER) {
-      return role === UserRole.MANAGER || role === UserRole.ADMIN;
-    } else if (requiredRole === UserRole.ADMIN) {
-      return role === UserRole.ADMIN;
-    }
-    return false;
-  });
+  // Check if user's role is in the allowed roles
+  const hasPermission = allowedRoles.some(allowedRole => hasAccess(allowedRole));
   
-  return <>{hasRequiredRole ? children : fallback}</>;
+  return hasPermission ? <>{children}</> : <>{fallback}</>;
 };
 
 export default RoleBasedAccess;
