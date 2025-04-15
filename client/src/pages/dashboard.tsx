@@ -585,7 +585,7 @@ const Dashboard: React.FC = () => {
                             Optimize your interest targeting
                           </h3>
                           <p className="text-sm text-gray-500 mt-1">
-                            {valueByInterest.sort((a, b) => b.avgValue - a.avgValue)[0]?.category} companies show the highest average deal value. Consider focusing more resources on this segment.
+                            {valueByInterest.sort((a, b) => b.avgValue - a.avgValue)[0]?.category} companies show the highest average deal scores. Consider focusing more resources on this segment.
                           </p>
                         </div>
                       )}
@@ -597,7 +597,7 @@ const Dashboard: React.FC = () => {
                             Reduce sales cycle time
                           </h3>
                           <p className="text-sm text-gray-500 mt-1">
-                            Your average sales cycle is {salesVelocity.avgSalesCycle} days. Finding ways to reduce this by even 10% could significantly increase your sales velocity and revenue.
+                            Your average sales cycle is {salesVelocity.avgSalesCycle} days. Finding ways to reduce this by even 10% could significantly increase your sales velocity and deal closure rates.
                           </p>
                         </div>
                       )}
@@ -711,7 +711,7 @@ const Dashboard: React.FC = () => {
               {/* Sales Velocity Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Deal Value Distribution</CardTitle>
+                  <CardTitle>Deal Score Distribution</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="h-80">
@@ -725,12 +725,12 @@ const Dashboard: React.FC = () => {
                         <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                         <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                         <Tooltip formatter={(value, name) => {
-                          if (name === "Total Value") return [formatNumber(value as number), name];
+                          if (name === "Total Score") return [formatNumber(value as number), name];
                           return [value, name];
                         }} />
                         <Legend />
                         <Bar yAxisId="left" dataKey="count" name="Deal Count" fill="#8884d8" />
-                        <Line yAxisId="right" type="monotone" dataKey="avgValue" name="Avg Value" stroke="#82ca9d" />
+                        <Line yAxisId="right" type="monotone" dataKey="avgValue" name="Avg Score" stroke="#82ca9d" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
