@@ -31,15 +31,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
   const { isAdmin, role, username } = useUserRole();
 
   const mainMenu = [
-    { name: 'Pipeline', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: 'Dashboard', path: '/dashboard', icon: <PieChart className="h-5 w-5" /> },
+    { name: 'Pipeline', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
     { 
       name: 'Views', 
       path: '/views', 
-      icon: <PieChart className="h-5 w-5" />,
+      icon: <Users className="h-5 w-5" />,
       isExpandable: true 
     },
-    { name: 'Reports', path: '/reports', icon: <PieChart className="h-5 w-5" /> },
+    { name: 'Reports', path: '/reports', icon: <Mail className="h-5 w-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="h-5 w-5" /> },
   ];
   

@@ -1,10 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart4, TrendingUp, DollarSign, Users } from 'lucide-react';
+import { BarChart4, TrendingUp, DollarSign, Users, Brain, Target, Clock, BarChart2, PercentIcon, Activity } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DealWithContact } from '@shared/schema';
-import { format, parseISO, isThisMonth, isSameMonth, subMonths } from 'date-fns';
+import { format, parseISO, isThisMonth, isSameMonth, subMonths, eachMonthOfInterval, startOfMonth, endOfMonth, compareDesc } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Import Recharts components
 import { 
@@ -21,11 +23,28 @@ import {
   PieChart,
   Pie,
   Cell,
+  Area,
+  AreaChart,
+  ComposedChart,
+  Scatter,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from 'recharts';
 
 const Dashboard: React.FC = () => {
+  // Define dashboard stats type
+  interface DashboardStats {
+    activeDeals: number;
+    pipelineValue: number;
+    winRate: number;
+    newContacts: number;
+  }
+
   // Fetch dashboard stats
-  const { data: stats = { activeDeals: 0, pipelineValue: 0, winRate: 0, newContacts: 0 }, isLoading: statsLoading } = useQuery({
+  const { data: stats = { activeDeals: 0, pipelineValue: 0, winRate: 0, newContacts: 0 }, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
   });
 
@@ -108,6 +127,195 @@ const Dashboard: React.FC = () => {
     const totalValue = deals.reduce((sum, deal) => sum + (deal.value || 0), 0);
     return totalValue / deals.length;
   }, [deals]);
+
+  // Calculate median deal size (often a more reliable metric than average)
+  const medianDealSize = React.useMemo(() => {
+    if (deals.length === 0) return 0;
+    
+    // Extract values and sort them
+    const values = deals
+      .map(deal => deal.value || 0)
+      .sort((a, b) => a - b);
+    
+    // Find median
+    const mid = Math.floor(values.length / 2);
+    return values.length % 2 === 0
+      ? (values[mid - 1] + values[mid]) / 2
+      : values[mid];
+  }, [deals]);
+
+  // Calculate sales velocity metrics
+  const salesVelocity = React.useMemo(() => {
+    // Number of deals
+    const numDeals = deals.length;
+    
+    // Average deal size (already calculated)
+    
+    // Win rate (already in stats)
+    
+    // Average sales cycle (in days)
+    const salesCycles = deals
+      .filter(deal => deal.closedAt !== null) // Only consider closed deals
+      .map(deal => {
+        const createdDate = new Date(deal.createdAt);
+        const closedDate = deal.closedAt ? new Date(deal.closedAt) : new Date();
+        return Math.ceil((closedDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      });
+    
+    const avgSalesCycle = salesCycles.length > 0 
+      ? salesCycles.reduce((sum, days) => sum + days, 0) / salesCycles.length 
+      : 0;
+    
+    // Calculate sales velocity
+    const velocity = numDeals * averageDealSize * (stats.winRate / 100) / (avgSalesCycle || 1);
+    
+    return {
+      avgSalesCycle: Math.round(avgSalesCycle),
+      velocity: Math.round(velocity)
+    };
+  }, [deals, averageDealSize, stats]);
+
+  // Calculate value by company interest
+  const valueByInterest = React.useMemo(() => {
+    const interestMap: Record<string, { count: number, value: number }> = {};
+    
+    deals.forEach(deal => {
+      // If interest field is not set, categorize as "Unspecified"
+      const interest = deal.interest || "Unspecified";
+      
+      if (!interestMap[interest]) {
+        interestMap[interest] = { count: 0, value: 0 };
+      }
+      
+      interestMap[interest].count++;
+      interestMap[interest].value += deal.value || 0;
+    });
+    
+    return Object.entries(interestMap).map(([category, data]) => ({
+      category,
+      count: data.count,
+      value: data.value,
+      avgValue: data.count > 0 ? data.value / data.count : 0
+    }));
+  }, [deals]);
+
+  // Calculate value by company fit
+  const valueByFit = React.useMemo(() => {
+    const fitMap: Record<string, { count: number, value: number }> = {};
+    
+    deals.forEach(deal => {
+      // If fit field is not set, categorize as "Unspecified"
+      const fit = deal.fit || "Unspecified";
+      
+      if (!fitMap[fit]) {
+        fitMap[fit] = { count: 0, value: 0 };
+      }
+      
+      fitMap[fit].count++;
+      fitMap[fit].value += deal.value || 0;
+    });
+    
+    return Object.entries(fitMap).map(([category, data]) => ({
+      category,
+      count: data.count,
+      value: data.value,
+      avgValue: data.count > 0 ? data.value / data.count : 0
+    }));
+  }, [deals]);
+
+  // Generate Insightful Metrics for Data Analysis Card
+  const dataAnalysis = React.useMemo(() => {
+    // 1. Top performing stage by conversion rate
+    const stageConversion: Record<string, { inCount: number, outCount: number }> = {};
+    
+    deals.forEach(deal => {
+      const stageName = deal.stage.name;
+      
+      if (!stageConversion[stageName]) {
+        stageConversion[stageName] = { inCount: 0, outCount: 0 };
+      }
+      
+      stageConversion[stageName].inCount++;
+      
+      // Consider a deal as "converted" if it's moved to a later stage
+      // This is approximate since we don't have actual flow data
+      if (deal.stage.order < 8) { // Assuming WON is near the end
+        stageConversion[stageName].outCount++;
+      }
+    });
+    
+    const conversionRates = Object.entries(stageConversion).map(([name, data]) => ({
+      name,
+      rate: data.inCount > 0 ? (data.outCount / data.inCount) * 100 : 0
+    }));
+    
+    const topStage = conversionRates.length > 0 
+      ? conversionRates.reduce((prev, current) => (current.rate > prev.rate) ? current : prev)
+      : { name: "N/A", rate: 0 };
+    
+    // 2. Month with highest deal creation
+    const monthWithMostDeals = dealsByMonth.reduce(
+      (prev, current) => (current.count > prev.count) ? current : prev,
+      { month: "N/A", count: 0 }
+    );
+    
+    // 3. Average deal value growth over time
+    const dealValuesByMonth: Record<string, { total: number, count: number }> = {};
+    const now = new Date();
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = subMonths(now, i);
+      const monthKey = format(date, 'MMM yyyy');
+      dealValuesByMonth[monthKey] = { total: 0, count: 0 };
+    }
+    
+    // Sum deal values by month
+    deals.forEach(deal => {
+      const dealDate = new Date(deal.createdAt);
+      
+      // Only include deals from the last 6 months
+      for (let i = 0; i <= 5; i++) {
+        const monthDate = subMonths(now, i);
+        if (isSameMonth(dealDate, monthDate)) {
+          const monthKey = format(monthDate, 'MMM yyyy');
+          dealValuesByMonth[monthKey].total += deal.value || 0;
+          dealValuesByMonth[monthKey].count++;
+          break;
+        }
+      }
+    });
+    
+    // Calculate average value per month and growth rate
+    const avgValueByMonth = Object.entries(dealValuesByMonth).map(([month, data]) => ({
+      month,
+      avgValue: data.count > 0 ? data.total / data.count : 0
+    }));
+    
+    let growthRate = 0;
+    if (avgValueByMonth.length >= 2) {
+      const firstMonth = avgValueByMonth[0].avgValue;
+      const lastMonth = avgValueByMonth[avgValueByMonth.length - 1].avgValue;
+      
+      if (firstMonth > 0) {
+        growthRate = ((lastMonth - firstMonth) / firstMonth) * 100;
+      }
+    }
+    
+    // 4. Deals requiring attention (those stuck in a stage for long time)
+    const stuckDeals = deals
+      .filter(deal => deal.daysInStage && deal.daysInStage > 30) // Arbitrary threshold, could be calibrated
+      .length;
+    
+    return {
+      topPerformingStage: topStage.name,
+      topStageConversionRate: Math.round(topStage.rate),
+      peakMonth: monthWithMostDeals.month,
+      peakMonthCount: monthWithMostDeals.count,
+      dealValueGrowthRate: Math.round(growthRate),
+      stuckDeals
+    };
+  }, [deals, dealsByMonth]);
 
   // COLORS for pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FE1B04', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c'];
