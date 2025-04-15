@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 // Application version - update this when making changes
-export const APP_VERSION = "1.04";
+export const APP_VERSION = "1.05";
 
 interface MainLayoutProps {
   children: React.ReactNode;

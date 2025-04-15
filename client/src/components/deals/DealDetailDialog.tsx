@@ -20,7 +20,6 @@ import {
   User, 
   Link2, 
   Calendar, 
-  DollarSign, 
   PieChart, 
   ExternalLink,
   Plus,
@@ -51,6 +50,8 @@ import { UserRole, useUserRole } from '@/hooks/use-user-role';
 import RoleBasedAccess from '@/components/auth/RoleBasedAccess';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
+import CustomColumnsEditor from './CustomColumnsEditor';
+import ContactDetailsCard from '@/components/contacts/ContactDetailsCard';
 
 interface DealDetailDialogProps {
   deal: DealWithContact;
@@ -335,49 +336,12 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
             <Separator className="my-4" />
             
             <div className="mb-6">
-              <h3 className="text-sm font-medium mb-4 flex justify-between items-center">
-                <span>Custom Columns</span>
-                <Button size="sm" variant="ghost" className="h-7 px-2">
-                  <Plus className="h-3 w-3 mr-1" /> Add
-                </Button>
-              </h3>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-gray-500">Source</p>
-                  <p className="text-sm">{deal.source || 'Not specified'}</p>
-                </div>
-                
-                {deal.thread && (
-                  <div>
-                    <p className="text-xs text-gray-500">Thread</p>
-                    <a 
-                      href={deal.thread} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex items-center"
-                    >
-                      {deal.thread.substring(0, 30)}...
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
-                  </div>
-                )}
-                
-                <div>
-                  <p className="text-xs text-gray-500">Next Steps</p>
-                  <p className="text-sm">{deal.nextSteps || 'Not specified'}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500">Fit</p>
-                  <p className="text-sm">{deal.fit || 'Not specified'}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500">Interest</p>
-                  <p className="text-sm">{deal.interest || 'Not specified'}</p>
-                </div>
-              </div>
+              <CustomColumnsEditor 
+                deal={deal} 
+                onDealUpdated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+                }} 
+              />
             </div>
             
             <Separator className="my-4" />
@@ -390,56 +354,13 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
                 </Button>
               </h3>
               
-              <div className="p-3 border rounded-md mb-3">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getInitials(deal.contact.name)}</AvatarFallback>
-                  </Avatar>
-                  
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <p className="text-sm font-medium">{deal.contact.name}</p>
-                      {deal.contact.email && <p className="text-xs text-gray-500">({deal.contact.email})</p>}
-                    </div>
-                    <p className="text-xs text-gray-500">{deal.contact.company}</p>
-                  </div>
-                </div>
-                
-                <div className="mt-2 space-y-1 pl-10">
-                  {deal.contact.position && (
-                    <p className="text-xs text-gray-600 flex items-center">
-                      <User className="h-3 w-3 mr-1 text-gray-400" />
-                      {deal.contact.position}
-                    </p>
-                  )}
-                  
-                  {deal.contact.email && (
-                    <p className="text-xs text-gray-600 flex items-center">
-                      <Mail className="h-3 w-3 mr-1 text-gray-400" />
-                      {deal.contact.email}
-                    </p>
-                  )}
-                  
-                  {deal.contact.phone && (
-                    <p className="text-xs text-gray-600 flex items-center">
-                      <Phone className="h-3 w-3 mr-1 text-gray-400" />
-                      {deal.contact.phone}
-                    </p>
-                  )}
-                  
-                  {deal.contact.linkedIn && (
-                    <a 
-                      href={deal.contact.linkedIn}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline flex items-center"
-                    >
-                      <Link2 className="h-3 w-3 mr-1 text-gray-400" />
-                      LinkedIn Profile
-                    </a>
-                  )}
-                </div>
-              </div>
+              <ContactDetailsCard 
+                contact={deal.contact} 
+                onContactUpdated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+                }}
+              />
             </div>
           </div>
         </div>
