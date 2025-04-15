@@ -212,7 +212,8 @@ export async function loadInitialData() {
         emailThreadCount: parseInt(record["Email Thread Count"] || "0"),
         assignedTo: record["Assigned To"] || "",
         boxKey: boxKey,
-        tags: []
+        tags: [],
+        createdAt: new Date() // Add the createdAt field
       };
       
       dealsToInsert.push(dealData);
