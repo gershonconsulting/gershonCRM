@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 
 const ByFitPage: React.FC = () => {
   const [selectedFit, setSelectedFit] = useState<string>('all');
-  const [selectedFits, setSelectedFits] = useState<string[]>(['High', 'Medium', 'Low']);
+  const [selectedFits, setSelectedFits] = useState<string[]>(['High', 'Medium', 'Low', 'Unknown']);
   
   // Fetch all deals
   const { data: deals = [], isLoading } = useQuery<DealWithContact[]>({
@@ -119,7 +119,7 @@ const ByFitPage: React.FC = () => {
         <div className="bg-gray-50 p-4 rounded-md mb-6">
           <h3 className="text-sm font-medium mb-3">Filter by multiple fit categories:</h3>
           <div className="flex flex-wrap gap-4">
-            {['High', 'Medium', 'Low'].map(fit => (
+            {['High', 'Medium', 'Low', 'Unknown'].map(fit => (
               <div key={fit} className="flex items-center gap-2">
                 <Checkbox 
                   id={`fit-${fit}`} 
@@ -128,7 +128,7 @@ const ByFitPage: React.FC = () => {
                 />
                 <Label htmlFor={`fit-${fit}`} className="flex items-center cursor-pointer">
                   {fitIcons[fit as keyof typeof fitIcons]}
-                  {fit}
+                  {fit === 'Unknown' ? 'Missing' : fit}
                   <span className="ml-1 text-xs font-normal">({fitCounts[fit as keyof typeof fitCounts]})</span>
                 </Label>
               </div>
@@ -145,7 +145,7 @@ const ByFitPage: React.FC = () => {
               className={`${selectedFit === fit ? fitColors[fit as keyof typeof fitColors] || '' : 'bg-white hover:bg-gray-50'} cursor-pointer px-3 py-1`}
               onClick={() => setSelectedFit(fit)}
             >
-              {fit === 'all' ? 'All' : fit} 
+              {fit === 'all' ? 'All' : fit === 'Unknown' ? 'Missing' : fit} 
               <span className="ml-1 text-xs font-normal">({fitCounts[fit as keyof typeof fitCounts]})</span>
             </Badge>
           ))}
@@ -171,7 +171,56 @@ const ByFitPage: React.FC = () => {
             <p className="text-sm">There are no deals with the selected fit criteria</p>
           </div>
         ) : (
-          <PipelineView filteredDeals={filteredDeals} />
+          <div className="space-y-8">
+            {/* Only show sections for the selected fits or all if "all" is selected */}
+            {(selectedFit === 'all' || selectedFit === 'High' || (selectedFit === 'custom' && selectedFits.includes('High'))) && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  {fitIcons.High} High Fit
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({deals.filter(deal => deal.fit === 'High').length})
+                  </span>
+                </h2>
+                <PipelineView filteredDeals={deals.filter(deal => deal.fit === 'High')} />
+              </div>
+            )}
+            
+            {(selectedFit === 'all' || selectedFit === 'Medium' || (selectedFit === 'custom' && selectedFits.includes('Medium'))) && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  {fitIcons.Medium} Medium Fit
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({deals.filter(deal => deal.fit === 'Medium').length})
+                  </span>
+                </h2>
+                <PipelineView filteredDeals={deals.filter(deal => deal.fit === 'Medium')} />
+              </div>
+            )}
+            
+            {(selectedFit === 'all' || selectedFit === 'Low' || (selectedFit === 'custom' && selectedFits.includes('Low'))) && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  {fitIcons.Low} Low Fit
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({deals.filter(deal => deal.fit === 'Low').length})
+                  </span>
+                </h2>
+                <PipelineView filteredDeals={deals.filter(deal => deal.fit === 'Low')} />
+              </div>
+            )}
+            
+            {(selectedFit === 'all' || selectedFit === 'Unknown' || (selectedFit === 'custom' && selectedFits.includes('Unknown'))) && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  {fitIcons.Unknown} Missing Fit
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({deals.filter(deal => !deal.fit || deal.fit === '').length})
+                  </span>
+                </h2>
+                <PipelineView filteredDeals={deals.filter(deal => !deal.fit || deal.fit === '')} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </MainLayout>

@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 const ByInterestPage: React.FC = () => {
   const [selectedInterest, setSelectedInterest] = useState<string>('all');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
-    'Antibody', 'Chemistry', 'AI/ML technology'
+    'Antibody', 'Chemistry', 'AI/ML technology', 'Target Discovery', 'Software', 'Unknown'
   ]);
   
   // Fetch all deals
@@ -130,7 +130,7 @@ const ByInterestPage: React.FC = () => {
         <div className="bg-gray-50 p-4 rounded-md mb-6">
           <h3 className="text-sm font-medium mb-3">Filter by multiple biotech categories:</h3>
           <div className="flex flex-wrap gap-4">
-            {mainBiotechInterests.map(interest => (
+            {[...mainBiotechInterests, 'Unknown'].map(interest => (
               <div key={interest} className="flex items-center gap-2">
                 <Checkbox 
                   id={`interest-${interest}`} 
@@ -139,7 +139,7 @@ const ByInterestPage: React.FC = () => {
                 />
                 <Label htmlFor={`interest-${interest}`} className="flex items-center cursor-pointer">
                   {interestIcons[interest as keyof typeof interestIcons]}
-                  {interest}
+                  {interest === 'Unknown' ? 'Missing' : interest}
                   <span className="ml-1 text-xs font-normal">({interestCounts[interest as keyof typeof interestCounts]})</span>
                 </Label>
               </div>
@@ -166,8 +166,8 @@ const ByInterestPage: React.FC = () => {
               className={`${selectedInterest === interest ? interestColors[interest as keyof typeof interestColors] || '' : 'bg-white hover:bg-gray-50'} cursor-pointer px-3 py-1`}
               onClick={() => setSelectedInterest(interest)}
             >
-              {interest !== 'Unknown' && interestIcons[interest as keyof typeof interestIcons]}
-              {interest} 
+              {interestIcons[interest as keyof typeof interestIcons]}
+              {interest === 'Unknown' ? 'Missing' : interest} 
               <span className="ml-1 text-xs font-normal">({interestCounts[interest as keyof typeof interestCounts]})</span>
             </Badge>
           ))}
@@ -193,7 +193,37 @@ const ByInterestPage: React.FC = () => {
             <p className="text-sm">There are no deals with the selected interest</p>
           </div>
         ) : (
-          <PipelineView filteredDeals={filteredDeals} />
+          <div className="space-y-8">
+            {/* Only show sections for the selected interests or all if "all" is selected */}
+            {mainBiotechInterests.map(interest => (
+              (selectedInterest === 'all' || selectedInterest === interest || 
+               (selectedInterest === 'custom' && selectedInterests.includes(interest))) && (
+                <div key={interest}>
+                  <h2 className="text-xl font-semibold mb-4 flex items-center">
+                    {interestIcons[interest]} {interest}
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      ({deals.filter(deal => deal.interest === interest).length})
+                    </span>
+                  </h2>
+                  <PipelineView filteredDeals={deals.filter(deal => deal.interest === interest)} />
+                </div>
+              )
+            ))}
+            
+            {/* Display the Unknown/Missing category if selected */}
+            {(selectedInterest === 'all' || selectedInterest === 'Unknown' || 
+              (selectedInterest === 'custom' && selectedInterests.includes('Unknown'))) && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                  {interestIcons.Unknown} Missing Interest
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({deals.filter(deal => !deal.interest || deal.interest === '').length})
+                  </span>
+                </h2>
+                <PipelineView filteredDeals={deals.filter(deal => !deal.interest || deal.interest === '')} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </MainLayout>
