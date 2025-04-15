@@ -13,18 +13,18 @@ interface PipelineViewProps {
   onNewDeal?: () => void;
 }
 
-// Updated colors to match the screenshot
+// Updated colors to exactly match the screenshot
 const stageColors = {
-  "Lead": "#FF5630", // red
-  "Contacted": "#FCA44C", // orange
-  "Reccommend By QC": "#F39C12", // orange-yellow
-  "Call Scheduled": "#F1C40F", // yellow
-  "Connected": "#2ECC71", // green
-  "Engaged": "#27AE60", // darker green
-  "Proposal Sent": "#3498DB", // blue
-  "WON": "#2980B9", // darker blue
-  "Later Stage": "#8E44AD", // purple
-  "Recycled": "#95A5A6", // gray
+  "Lead": "#E73C37", // bright red
+  "Contacted": "#F37021", // orange
+  "Recommend By QC": "#FAA21B", // gold/amber
+  "Call Scheduled": "#F8C300", // yellow
+  "Connected": "#DAED56", // lime green
+  "Engaged": "#97C93D", // grass green
+  "Proposal Sent": "#00A94F", // emerald green
+  "WON": "#009444", // forest green
+  "Later Stage": "#0072BC", // blue
+  "Recycled": "#2E3192", // indigo/purple
 };
 
 const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
@@ -106,27 +106,33 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
         </div>
       </div>
 
-      {/* Pipeline Summary */}
-      <div className="mt-6 flex space-x-1 overflow-x-auto">
-        {sortedStages.map(stage => {
-          const stageDeals = dealsByStage[stage.id] || [];
-          const width = `${Math.max(5, Math.min(25, (stageDeals.length / deals.length) * 100))}%`;
-          
-          return (
-            <div 
-              key={stage.id} 
-              className="flex-shrink-0 text-center text-white font-medium rounded-sm overflow-hidden"
-              style={{ 
-                width, 
-                backgroundColor: stageColors[stage.name as keyof typeof stageColors] || stage.color,
-                padding: '8px 4px'
-              }}
-            >
-              <div className="text-lg font-bold">{stageDeals.length}</div>
-              <div className="text-xs">{stage.name}</div>
-            </div>
-          );
-        })}
+      {/* Pipeline Summary - Exact match to the image */}
+      <div className="mt-6 rounded-md overflow-hidden">
+        <div className="flex w-full">
+          {sortedStages.map(stage => {
+            const stageDeals = dealsByStage[stage.id] || [];
+            // Calculate proportional width based on total deals
+            const totalDeals = Object.values(dealsByStage).flat().length;
+            const width = totalDeals > 0 
+              ? `${Math.max(5, Math.min(25, (stageDeals.length / totalDeals) * 100))}%` 
+              : "10%"; // Equal width if no deals
+            
+            return (
+              <div 
+                key={stage.id} 
+                className="text-center text-white font-medium"
+                style={{ 
+                  width, 
+                  backgroundColor: stageColors[stage.name as keyof typeof stageColors] || stage.color,
+                  padding: '8px 0'
+                }}
+              >
+                <div className="text-xl font-bold">{stageDeals.length}</div>
+                <div className="text-xs">{stage.name}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Deals Table View */}

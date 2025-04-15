@@ -70,19 +70,19 @@ const DealDetailDialog: React.FC<DealDetailDialogProps> = ({
   // Format date
   const formattedDate = format(new Date(deal.createdAt), 'MMM dd, yyyy');
 
-  // Get stage style based on stage name
+  // Get stage style based on stage name - matching the pipeline view colors
   const getStageStyle = (stageName: string) => {
     const stageStyleMap: Record<string, { color: string, bgColor: string }> = {
-      'Lead': { color: 'white', bgColor: '#FF5630' },
-      'Contacted': { color: 'white', bgColor: '#FCA44C' },
-      'Reccommend By QC': { color: 'white', bgColor: '#F39C12' },
-      'Call Scheduled': { color: 'white', bgColor: '#F1C40F' },
-      'Connected': { color: 'white', bgColor: '#2ECC71' },
-      'Engaged': { color: 'white', bgColor: '#27AE60' },
-      'Proposal Sent': { color: 'white', bgColor: '#3498DB' },
-      'WON': { color: 'white', bgColor: '#2980B9' },
-      'Later Stage': { color: 'white', bgColor: '#8E44AD' },
-      'Recycled': { color: 'white', bgColor: '#95A5A6' },
+      'Lead': { color: 'white', bgColor: '#E73C37' },
+      'Contacted': { color: 'white', bgColor: '#F37021' },
+      'Recommend By QC': { color: 'white', bgColor: '#FAA21B' },
+      'Call Scheduled': { color: 'white', bgColor: '#F8C300' },
+      'Connected': { color: 'white', bgColor: '#DAED56' },
+      'Engaged': { color: 'white', bgColor: '#97C93D' },
+      'Proposal Sent': { color: 'white', bgColor: '#00A94F' },
+      'WON': { color: 'white', bgColor: '#009444' },
+      'Later Stage': { color: 'white', bgColor: '#0072BC' },
+      'Recycled': { color: 'white', bgColor: '#2E3192' },
     };
     
     return stageStyleMap[stageName] || { color: 'white', bgColor: 'gray' };
