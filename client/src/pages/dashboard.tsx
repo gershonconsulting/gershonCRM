@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UserPlus, Plus, User, Settings } from 'lucide-react';
+import { UserPlus, Plus } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
-import StatCard from '@/components/dashboard/StatCard';
 import ActivityFeed from '@/components/activity/ActivityFeed';
 import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
 import DealForm from '@/components/deals/DealForm';
 import ContactForm from '@/components/contacts/ContactForm';
-import UserRoleSelector from '@/components/auth/UserRoleSelector';
-import { UserRole, useUserRole } from '@/hooks/use-user-role';
+import { UserRole } from '@/hooks/use-user-role';
 import RoleBasedAccess from '@/components/auth/RoleBasedAccess';
 
 const Dashboard: React.FC = () => {
@@ -60,13 +58,6 @@ const Dashboard: React.FC = () => {
                 New Contact
               </Button>
             </RoleBasedAccess>
-          </div>
-        </div>
-
-        {/* Role Selector */}
-        <div className="mt-8">
-          <div className="max-w-md">
-            <UserRoleSelector />
           </div>
         </div>
 
