@@ -551,6 +551,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Combined import endpoint (both contacts and deals)
+  // Endpoint to load initial data from CSV files
+  app.post(`${api}/load-initial-data`, async (req, res) => {
+    try {
+      console.log("Loading initial data from CSV files...");
+      const result = await loadInitialData();
+      res.status(200).json({
+        message: "Successfully loaded initial data",
+        stats: result
+      });
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      
+      res.status(500).json({
+        message: 'Failed to load initial data',
+        error: errorMessage,
+        details: errorStack
+      });
+    }
+  });
+
   app.post(`${api}/import/combined`, upload.fields([
     { name: 'contactsFile', maxCount: 1 },
     { name: 'dealsFile', maxCount: 1 }

@@ -228,6 +228,40 @@ export default function ImportData() {
     importDealsMutation.mutate(dealsFile);
   };
 
+  // New mutation for loading initial data
+  const loadInitialDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/load-initial-data');
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Initial data loaded successfully',
+        description: `Loaded ${data.stats.stages} stages, ${data.stats.contacts} contacts, and ${data.stats.deals} deals`,
+        variant: 'default',
+      });
+      
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/deal-stages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Data loading failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleLoadInitialData = () => {
+    if (confirm('This will load data from the attached CSV files directly from the server. Continue?')) {
+      loadInitialDataMutation.mutate();
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -237,6 +271,35 @@ export default function ImportData() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex items-start">
+            <FileCheck className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-green-800">Quick Data Load</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Use this button to load all the data directly from the CSV files already present on the server.
+              </p>
+              <Button 
+                onClick={handleLoadInitialData} 
+                className="mt-3 bg-green-600 hover:bg-green-700"
+                disabled={loadInitialDataMutation.isPending}
+              >
+                {loadInitialDataMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading initial data...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Load Initial Data
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
         <Tabs defaultValue="combined">
           <TabsList className="mb-6">
             <TabsTrigger value="combined">Combined Import</TabsTrigger>

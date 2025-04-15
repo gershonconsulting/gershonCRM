@@ -1,7 +1,6 @@
 import { parse } from 'csv-parse/sync';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { db } from './db';
 import { contacts, deals, dealStages } from '@shared/schema';
 import { InsertContact, InsertDeal, InsertDealStage } from '@shared/schema';
@@ -13,10 +12,8 @@ export async function loadInitialData() {
   console.log("Starting to load initial data from CSV files...");
   
   try {
-    // Get the directory name in ESM
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const rootDir = path.join(__dirname, '..');
+    // Get the path to the root directory
+    const rootDir = path.resolve('.');
     
     // Define file paths
     const contactsFilePath = path.join(rootDir, 'attached_assets/Streak Export_ MAbSilico - LG (4-14-25, 3_32 PM) - Contacts (MAbSilico - LG).csv');
