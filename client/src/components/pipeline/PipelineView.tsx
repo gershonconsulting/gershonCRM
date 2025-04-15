@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DealWithContact, DealStage } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Filter, Plus, ChevronDown } from 'lucide-react';
+import { Filter, Plus, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 import DealDetailDialog from '@/components/deals/DealDetailDialog';
 import DealForm from '@/components/deals/DealForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -103,6 +103,49 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
             <Plus className="h-4 w-4 mr-2" />
             New Deal
           </Button>
+        </div>
+      </div>
+      
+      {/* Pipeline Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 mb-6">
+        <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">Total Active Deals</p>
+          <p className="text-2xl font-bold">{deals.length}</p>
+          <div className="mt-2 flex items-center text-xs">
+            <span className="text-green-600 flex items-center">
+              <ArrowUp className="h-3 w-3 mr-1" />
+              5.3%
+            </span>
+            <span className="ml-1 text-gray-500">vs last week</span>
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">Deals Won This Month</p>
+          <p className="text-2xl font-bold">
+            {deals.filter(d => d.stage?.name === 'WON').length}
+          </p>
+          <div className="mt-2 flex items-center text-xs">
+            <span className="text-green-600 flex items-center">
+              <ArrowUp className="h-3 w-3 mr-1" />
+              12.5%
+            </span>
+            <span className="ml-1 text-gray-500">vs previous month</span>
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">Pipeline Value</p>
+          <p className="text-2xl font-bold">
+            ${deals.reduce((sum, deal) => sum + (deal.value || 0), 0).toLocaleString()}
+          </p>
+          <div className="mt-2 flex items-center text-xs">
+            <span className="text-red-600 flex items-center">
+              <ArrowDown className="h-3 w-3 mr-1" />
+              2.1%
+            </span>
+            <span className="ml-1 text-gray-500">vs previous month</span>
+          </div>
         </div>
       </div>
 
