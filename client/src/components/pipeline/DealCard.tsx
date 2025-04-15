@@ -36,13 +36,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onClick }) => {
       .substring(0, 2);
   };
 
-  // Format the value as currency
-  const formattedValue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(deal.value);
+  // No monetary values displayed
 
   // Badge variant based on stage color
   const getBadgeVariant = (color: string) => {
@@ -67,7 +61,6 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onClick }) => {
     >
       <div className="flex justify-between items-start">
         <h4 className="font-medium text-gray-900 text-sm">{deal.name}</h4>
-        <span className="font-semibold text-sm text-gray-900">{formattedValue}</span>
       </div>
       <p className="mt-1 text-xs text-gray-500 line-clamp-1">{deal.description}</p>
       <div className="mt-3 flex items-center justify-between">

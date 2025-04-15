@@ -30,13 +30,7 @@ const PipelineColumn: React.FC<PipelineColumnProps> = ({
     id,
   });
 
-  // Format the value as currency
-  const formattedValue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  // No monetary values displayed
 
   // Badge variant based on color
   const getBadgeVariant = (color: string) => {
@@ -55,7 +49,7 @@ const PipelineColumn: React.FC<PipelineColumnProps> = ({
       <div className="bg-gray-100 rounded-t-md p-3 flex justify-between items-center border-b border-gray-200">
         <div>
           <h3 className="font-medium text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500">{count} deals · {formattedValue}</p>
+          <p className="text-sm text-gray-500">{count} deals</p>
         </div>
         <Badge variant={getBadgeVariant(color)}>
           {probability}%
