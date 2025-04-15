@@ -21,13 +21,8 @@ const ByInterestPage: React.FC = () => {
     queryKey: ['/api/deals'],
   });
   
-  // Get unique interest values from deals
-  const uniqueInterestValues = Array.from(
-    new Set(
-      deals.map(deal => deal.interest || '').filter(interest => interest !== '')
-    )
-  ) as string[];
-  const interestValues = ['all', ...uniqueInterestValues];
+  // Use predefined interest values: High, Medium, Low
+  const interestValues = ['all', 'High', 'Medium', 'Low'];
   
   // Filter deals by interest
   const filteredDeals = selectedInterest === 'all' 

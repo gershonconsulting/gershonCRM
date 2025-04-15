@@ -21,13 +21,8 @@ const ByFitPage: React.FC = () => {
     queryKey: ['/api/deals'],
   });
   
-  // Get unique fit values from deals
-  const uniqueFitValues = Array.from(
-    new Set(
-      deals.map(deal => deal.fit || '').filter(fit => fit !== '')
-    )
-  ) as string[];
-  const fitValues = ['all', ...uniqueFitValues];
+  // Use predefined fit values: High, Medium, Low
+  const fitValues = ['all', 'High', 'Medium', 'Low'];
   
   // Filter deals by fit
   const filteredDeals = selectedFit === 'all' 
