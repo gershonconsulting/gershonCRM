@@ -89,7 +89,7 @@ const ByMonthPage: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <PipelineView />
+          <PipelineView filteredDeals={filteredDeals} />
         )}
       </div>
     </MainLayout>

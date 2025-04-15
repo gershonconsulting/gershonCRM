@@ -20,6 +20,7 @@ import {
 
 interface PipelineViewProps {
   onNewDeal?: () => void;
+  filteredDeals?: DealWithContact[]; // Optional prop for filtered deals
 }
 
 // Updated colors to exactly match the screenshot
@@ -36,7 +37,7 @@ const stageColors = {
   "Recycled": "#2E3192", // indigo/purple
 };
 
-const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
+const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal, filteredDeals }) => {
   const queryClient = useQueryClient();
   const [selectedDeal, setSelectedDeal] = useState<DealWithContact | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -48,9 +49,12 @@ const PipelineView: React.FC<PipelineViewProps> = ({ onNewDeal }) => {
   });
 
   // Fetch deals
-  const { data: deals = [] } = useQuery<DealWithContact[]>({
+  const { data: fetchedDeals = [] } = useQuery<DealWithContact[]>({
     queryKey: ['/api/deals'],
   });
+  
+  // Use filtered deals if provided, otherwise use all deals
+  const deals = filteredDeals || fetchedDeals;
 
   const handleDealClick = (deal: DealWithContact) => {
     setSelectedDeal(deal);
