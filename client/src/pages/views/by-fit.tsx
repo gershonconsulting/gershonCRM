@@ -1,80 +1,74 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DealWithContact } from '@shared/schema';
 import MainLayout from '@/layouts/MainLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import PipelineView from '@/components/pipeline/PipelineView';
 import { Button } from '@/components/ui/button';
-import { HeartHandshake } from 'lucide-react';
+import { Filter } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-export default function ByFit() {
+const ByFitPage: React.FC = () => {
+  const [selectedFit, setSelectedFit] = useState<string>('all');
+  
+  // Fetch all deals
+  const { data: deals = [], isLoading } = useQuery<DealWithContact[]>({
+    queryKey: ['/api/deals'],
+  });
+  
+  // Get unique fit values from deals
+  const fitValues = ['all', ...new Set(deals.map(deal => deal.fit).filter(Boolean))];
+  
+  // Filter deals by fit
+  const filteredDeals = selectedFit === 'all' 
+    ? deals 
+    : deals.filter(deal => deal.fit === selectedFit);
+    
   return (
     <MainLayout>
-      <div className="container mx-auto py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Contacts by Fit</h1>
-          <Button>Add Contact</Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <HeartHandshake className="h-5 w-5 mr-2 text-primary" />
-                High Fit
-              </CardTitle>
-              <CardDescription>Contacts with high potential fit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-sm text-gray-500">contacts</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">View Contacts</Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <HeartHandshake className="h-5 w-5 mr-2 text-amber-500" />
-                Medium Fit
-              </CardTitle>
-              <CardDescription>Contacts with medium potential fit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-sm text-gray-500">contacts</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">View Contacts</Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <HeartHandshake className="h-5 w-5 mr-2 text-gray-500" />
-                Low Fit
-              </CardTitle>
-              <CardDescription>Contacts with low potential fit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-sm text-gray-500">contacts</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">View Contacts</Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">All Contacts</h2>
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b">
-              <p className="text-gray-500">No contacts found</p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Deals By Fit</h1>
+          
+          <div className="flex gap-3">
+            <Select
+              value={selectedFit}
+              onValueChange={setSelectedFit}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Fit" />
+              </SelectTrigger>
+              <SelectContent>
+                {fitValues.map((fit) => (
+                  <SelectItem key={fit} value={fit}>
+                    {fit === 'all' ? 'All Fits' : fit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline">
+              <Filter className="h-4 w-4 mr-2" />
+              Advanced Filter
+            </Button>
           </div>
         </div>
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <PipelineView />
+        )}
       </div>
     </MainLayout>
   );
-}
+};
+
+export default ByFitPage;

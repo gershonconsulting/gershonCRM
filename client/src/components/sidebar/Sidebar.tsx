@@ -25,12 +25,19 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSidebar }) => {
   const [location] = useLocation();
-  const [viewsOpen, setViewsOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    'Views': true, // Default to open
+  });
   const { isAdmin, role, username } = useUserRole();
 
   const mainMenu = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { name: 'Views', path: '/views/by-fit', icon: <PieChart className="h-5 w-5" /> },
+    { 
+      name: 'Views', 
+      path: '/views', 
+      icon: <PieChart className="h-5 w-5" />,
+      isExpandable: true 
+    },
     { name: 'Reports', path: '/reports', icon: <PieChart className="h-5 w-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="h-5 w-5" /> },
   ];
@@ -44,14 +51,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
   };
   
   const viewsMenu = [
-    { name: 'By Fit', path: '/views/by-fit', icon: <HeartHandshake className="h-5 w-5" /> },
-    { name: 'By Interest', path: '/views/by-interest', icon: <Star className="h-5 w-5" /> },
-    { name: 'By Week', path: '/views/by-week', icon: <Clock className="h-5 w-5" /> },
+    { name: 'By Fit', path: '/views/by-fit', icon: <HeartHandshake className="h-4 w-4" /> },
+    { name: 'By Interest', path: '/views/by-interest', icon: <Star className="h-4 w-4" /> },
+    { name: 'By Month', path: '/views/by-month', icon: <Clock className="h-4 w-4" /> },
   ];
 
   const handleLinkClick = () => {
     // Close mobile sidebar on navigation
     closeMobileSidebar();
+  };
+  
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuName]: !prev[menuName]
+    }));
   };
 
   return (
@@ -74,22 +88,79 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
         <nav className="flex-1 space-y-1">
           {/* Main menu items */}
           {mainMenu.map((item) => {
+            const isViewsItem = item.name === 'Views';
             const isActive = location === item.path;
+            const isViewsSubmenuActive = location.startsWith('/views/');
+            
             return (
-              <Link 
-                key={item.path}
-                href={item.path}
-                onClick={handleLinkClick}
-                className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group
-                  ${isActive 
-                    ? 'text-white bg-primary' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`
-                }
-              >
-                <div className="mr-3">{item.icon}</div>
-                {isOpen && <span>{item.name}</span>}
-              </Link>
+              <div key={item.path}>
+                {isViewsItem ? (
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => toggleMenu('Views')}
+                      className={`w-full flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md group
+                        ${isViewsSubmenuActive 
+                          ? 'text-white bg-primary' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }`
+                      }
+                    >
+                      <div className="flex items-center">
+                        <div className="mr-3">{item.icon}</div>
+                        {isOpen && <span>{item.name}</span>}
+                      </div>
+                      {isOpen && (
+                        <div>
+                          {expandedMenus['Views'] ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </div>
+                      )}
+                    </button>
+                    
+                    {/* Views submenu */}
+                    {expandedMenus['Views'] && isOpen && (
+                      <div className="pl-6 space-y-1">
+                        {viewsMenu.map((viewItem) => {
+                          const isViewActive = location === viewItem.path;
+                          return (
+                            <Link
+                              key={viewItem.path}
+                              href={viewItem.path}
+                              onClick={handleLinkClick}
+                              className={`flex items-center px-2 py-2 text-xs font-medium rounded-md group
+                                ${isViewActive 
+                                  ? 'text-white bg-primary/90' 
+                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                }`
+                              }
+                            >
+                              <div className="mr-2">{viewItem.icon}</div>
+                              <span>{viewItem.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link 
+                    href={item.path}
+                    onClick={handleLinkClick}
+                    className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group
+                      ${isActive 
+                        ? 'text-white bg-primary' 
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`
+                    }
+                  >
+                    <div className="mr-3">{item.icon}</div>
+                    {isOpen && <span>{item.name}</span>}
+                  </Link>
+                )}
+              </div>
             );
           })}
           
@@ -110,8 +181,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, closeMobileSid
               {isOpen && <span>{adminMenuItem.name}</span>}
             </Link>
           )}
-          
-          {/* Views dropdown remains hidden since we now have a main navigation item for it */}
         </nav>
       </div>
       
