@@ -42,10 +42,10 @@ export default function ByMonth() {
     ? deals.filter(deal => {
         const dealDate = new Date(deal.createdAt);
         return isWithinInterval(dealDate, {
-          start: selectedMonthObj.startDate,
-          end: selectedMonthObj.endDate
+          start: startOfMonth(selectedMonthObj.startDate),
+          end: endOfMonth(selectedMonthObj.endDate)
         });
-      })
+      }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : deals;
 
   return (
