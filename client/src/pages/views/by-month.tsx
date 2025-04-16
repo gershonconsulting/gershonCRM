@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { DealWithContact } from '@shared/schema';
 import MainLayout from '@/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown, Plus, Checkbox } from 'lucide-react';
+import { Filter, ChevronDown, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import {
   Select,
