@@ -25,7 +25,7 @@ export default function ByMonth() {
       startDate: startOfMonth(date),
       endDate: endOfMonth(date)
     };
-  });
+  }).reverse();
 
   const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
 
