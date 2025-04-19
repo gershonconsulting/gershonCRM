@@ -39,13 +39,18 @@ export default function ByMonth() {
 
   // Filter and group deals by month
   const filteredDeals = selectedMonthObj
-    ? deals.filter(deal => {
-        const dealDate = new Date(deal.createdAt);
-        return isWithinInterval(dealDate, {
-          start: startOfMonth(selectedMonthObj.startDate),
-          end: endOfMonth(selectedMonthObj.endDate)
-        });
-      }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    ? deals
+        .reduce((acc, deal) => {
+          const dealDate = new Date(deal.createdAt);
+          if (isWithinInterval(dealDate, {
+            start: startOfMonth(selectedMonthObj.startDate),
+            end: endOfMonth(selectedMonthObj.endDate)
+          })) {
+            acc.push(deal);
+          }
+          return acc;
+        }, [] as DealWithContact[])
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     : deals;
 
   return (

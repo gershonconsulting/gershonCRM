@@ -77,11 +77,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const stage = await storage.getDealStage(id);
-      
+
       if (!stage) {
         return res.status(404).json({ message: "Deal stage not found" });
       }
-      
+
       res.json(stage);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch deal stage" });
@@ -91,14 +91,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${api}/deal-stages`, async (req, res) => {
     try {
       const validationResult = insertDealStageSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid deal stage data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const newStage = await storage.createDealStage(validationResult.data);
       res.status(201).json(newStage);
     } catch (error) {
@@ -110,20 +110,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validationResult = insertDealStageSchema.partial().safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid deal stage data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const updatedStage = await storage.updateDealStage(id, validationResult.data);
-      
+
       if (!updatedStage) {
         return res.status(404).json({ message: "Deal stage not found" });
       }
-      
+
       res.json(updatedStage);
     } catch (error) {
       res.status(500).json({ message: "Failed to update deal stage" });
@@ -134,11 +134,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteDealStage(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Deal stage not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete deal stage" });
@@ -162,11 +162,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const contact = await storage.getContact(id);
-      
+
       if (!contact) {
         return res.status(404).json({ message: "Contact not found" });
       }
-      
+
       res.json(contact);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch contact" });
@@ -176,14 +176,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${api}/contacts`, async (req, res) => {
     try {
       const validationResult = insertContactSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid contact data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const newContact = await storage.createContact(validationResult.data);
       res.status(201).json(newContact);
     } catch (error) {
@@ -195,20 +195,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validationResult = insertContactSchema.partial().safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid contact data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const updatedContact = await storage.updateContact(id, validationResult.data);
-      
+
       if (!updatedContact) {
         return res.status(404).json({ message: "Contact not found" });
       }
-      
+
       res.json(updatedContact);
     } catch (error) {
       res.status(500).json({ message: "Failed to update contact" });
@@ -219,11 +219,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteContact(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Contact not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete contact" });
@@ -235,14 +235,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Fetching deals...");
       const stageId = req.query.stageId ? parseInt(req.query.stageId as string) : undefined;
-      
-      if (stageId) {
+      const month = req.query.month ? req.query.month as string : undefined;
+
+      if (stageId && month) {
+        const deals = await storage.getDealsByStageAndMonth(stageId, month);
+        return res.json(deals);
+      } else if (stageId) {
         console.log(`Fetching deals by stage ID: ${stageId}`);
         const deals = await storage.getDealsByStage(stageId);
         console.log(`Deals fetched successfully for stage ${stageId}:`, deals.length);
         return res.json(deals);
       }
-      
+
       const deals = await storage.getDeals();
       console.log("All deals fetched successfully:", deals.length);
       res.json(deals);
@@ -256,11 +260,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deal = await storage.getDeal(id);
-      
+
       if (!deal) {
         return res.status(404).json({ message: "Deal not found" });
       }
-      
+
       res.json(deal);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch deal" });
@@ -270,14 +274,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${api}/deals`, async (req, res) => {
     try {
       const validationResult = insertDealSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid deal data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const newDeal = await storage.createDeal(validationResult.data);
       res.status(201).json(newDeal);
     } catch (error) {
@@ -289,20 +293,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validationResult = insertDealSchema.partial().safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid deal data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const updatedDeal = await storage.updateDeal(id, validationResult.data);
-      
+
       if (!updatedDeal) {
         return res.status(404).json({ message: "Deal not found" });
       }
-      
+
       res.json(updatedDeal);
     } catch (error) {
       res.status(500).json({ message: "Failed to update deal" });
@@ -313,11 +317,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteDeal(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Deal not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete deal" });
@@ -329,17 +333,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const contactId = req.query.contactId ? parseInt(req.query.contactId as string) : undefined;
       const dealId = req.query.dealId ? parseInt(req.query.dealId as string) : undefined;
-      
+
       if (contactId) {
         const tasks = await storage.getTasksByContact(contactId);
         return res.json(tasks);
       }
-      
+
       if (dealId) {
         const tasks = await storage.getTasksByDeal(dealId);
         return res.json(tasks);
       }
-      
+
       const tasks = await storage.getTasks();
       res.json(tasks);
     } catch (error) {
@@ -351,11 +355,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const task = await storage.getTask(id);
-      
+
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
-      
+
       res.json(task);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch task" });
@@ -365,14 +369,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${api}/tasks`, async (req, res) => {
     try {
       const validationResult = insertTaskSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid task data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const newTask = await storage.createTask(validationResult.data);
       res.status(201).json(newTask);
     } catch (error) {
@@ -384,20 +388,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validationResult = insertTaskSchema.partial().safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid task data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const updatedTask = await storage.updateTask(id, validationResult.data);
-      
+
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
       }
-      
+
       res.json(updatedTask);
     } catch (error) {
       res.status(500).json({ message: "Failed to update task" });
@@ -408,11 +412,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteTask(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Task not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete task" });
@@ -425,21 +429,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Fetching activities...");
       const contactId = req.query.contactId ? parseInt(req.query.contactId as string) : undefined;
       const dealId = req.query.dealId ? parseInt(req.query.dealId as string) : undefined;
-      
+
       if (contactId) {
         console.log(`Fetching activities by contact ID: ${contactId}`);
         const activities = await storage.getActivitiesByContact(contactId);
         console.log(`Activities fetched successfully for contact ${contactId}:`, activities.length);
         return res.json(activities);
       }
-      
+
       if (dealId) {
         console.log(`Fetching activities by deal ID: ${dealId}`);
         const activities = await storage.getActivitiesByDeal(dealId);
         console.log(`Activities fetched successfully for deal ${dealId}:`, activities.length);
         return res.json(activities);
       }
-      
+
       const activities = await storage.getActivities();
       console.log("All activities fetched successfully:", activities.length);
       res.json(activities);
@@ -453,11 +457,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const activity = await storage.getActivity(id);
-      
+
       if (!activity) {
         return res.status(404).json({ message: "Activity not found" });
       }
-      
+
       res.json(activity);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch activity" });
@@ -467,14 +471,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${api}/activities`, async (req, res) => {
     try {
       const validationResult = insertActivitySchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid activity data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       const newActivity = await storage.createActivity(validationResult.data);
       res.status(201).json(newActivity);
     } catch (error) {
@@ -486,11 +490,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteActivity(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Activity not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete activity" });
@@ -503,15 +507,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
-      
+
       // TODO: Get actual user ID from auth system
       const userId = 1;
-      
+
       const count = await importContactsFromCSV(req.file.path, userId);
-      
+
       // Clean up the temporary file
       fs.unlinkSync(req.file.path);
-      
+
       res.status(200).json({ 
         message: `Successfully imported ${count} contacts`,
         count
@@ -521,7 +525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a more detailed error response
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       res.status(500).json({ 
         message: 'Failed to import contacts', 
         error: errorMessage,
@@ -532,21 +536,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   app.post(`${api}/import/deals`, upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
-      
+
       // TODO: Get actual user ID from auth system
       const userId = 1;
-      
+
       const count = await importDealsFromCSV(req.file.path, userId);
-      
+
       // Clean up the temporary file
       fs.unlinkSync(req.file.path);
-      
+
       res.status(200).json({ 
         message: `Successfully imported ${count} deals`,
         count
@@ -556,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a more detailed error response
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       res.status(500).json({ 
         message: 'Failed to import deals', 
         error: errorMessage,
@@ -567,7 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Combined import endpoint (both contacts and deals)
   // Endpoint to load initial data from CSV files
   app.post(`${api}/load-initial-data`, async (req, res) => {
@@ -582,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error loading initial data:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       res.status(500).json({
         message: 'Failed to load initial data',
         error: errorMessage,
@@ -597,17 +601,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   ]), async (req, res) => {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
+
       if (!files || !files.contactsFile || !files.dealsFile) {
         return res.status(400).json({ 
           message: 'Missing files. Both contacts and deals files are required.',
           filesReceived: files ? Object.keys(files) : []
         });
       }
-      
+
       const contactsFile = files.contactsFile[0];
       const dealsFile = files.dealsFile[0];
-      
+
       if (!contactsFile || !dealsFile) {
         return res.status(400).json({ 
           message: 'Missing required files',
@@ -615,20 +619,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dealsFile: dealsFile ? true : false
         });
       }
-      
+
       // TODO: Get actual user ID from auth system
       const userId = 1;
-      
+
       console.log('Processing combined import:');
       console.log('Contacts file:', contactsFile.originalname);
       console.log('Deals file:', dealsFile.originalname);
-      
+
       const result = await importCombinedData(contactsFile.path, dealsFile.path, userId);
-      
+
       // Clean up the temporary files
       fs.unlinkSync(contactsFile.path);
       fs.unlinkSync(dealsFile.path);
-      
+
       res.status(200).json({ 
         message: `Successfully imported ${result.contacts} contacts and ${result.deals} deals`,
         ...result
@@ -638,7 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a more detailed error response
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       res.status(500).json({ 
         message: 'Failed to import data', 
         error: errorMessage,
@@ -647,12 +651,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Data Import Endpoints (JSON-based)
   app.post(`${api}/import/streak-data`, async (req, res) => {
     try {
       const { boxesData, contactsData } = req.body;
-      
+
       if (!boxesData || !contactsData) {
         return res.status(400).json({ message: "Missing required data" });
       }
@@ -662,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         columns: true,
         skip_empty_lines: true
       });
-      
+
       const contactsRecords = parse(contactsData, {
         columns: true,
         skip_empty_lines: true
@@ -671,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process and store stages first
       const stageMap = new Map();
       const stageNames = Array.from(new Set(boxesRecords.map((record: any) => record.Stage)));
-      
+
       // Create default colors for stages
       const stageColors = [
         "#FF5630", // Lead - red
@@ -685,7 +689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "#253858", // Later Stage - dark blue
         "#505F79"  // Recycled - gray
       ];
-      
+
       // Create stages in order
       for (let i = 0; i < stageNames.length; i++) {
         const stageName = stageNames[i];
@@ -697,7 +701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           probability: stageName2 === "WON" ? 100 : Math.max(10, Math.min(90, (i + 1) * 10)),
           count: boxesRecords.filter((r: any) => r.Stage === stageName2).length
         };
-        
+
         try {
           const stage = await storage.createDealStage(stageData);
           stageMap.set(stageName, stage.id);
@@ -705,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Failed to create stage ${stageName}:`, error);
         }
       }
-      
+
       // Process contacts
       const contactMap = new Map();
       for (const record of contactsRecords) {
@@ -730,7 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           boxKey: record["Box Key"] || "",
           tags: []
         };
-        
+
         try {
           const contact = await storage.createContact(contactData);
           contactMap.set(record["Key"], contact.id);
@@ -739,7 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Failed to create contact for ${contactData.name}:`, error);
         }
       }
-      
+
       // Process boxes (deals)
       for (const record of boxesRecords) {
         // Find stage ID
@@ -748,16 +752,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Stage not found: ${record.Stage}`);
           continue;
         }
-        
+
         // Find related contact (by box key)
         const boxKey = record["Box Key"];
         const contactId = contactMap.get(boxKey);
-        
+
         if (!contactId) {
           console.error(`Contact not found for box key: ${boxKey}`);
           continue;
         }
-        
+
         const dealData: InsertDeal = {
           name: record.Name || "",
           contactId: contactId,
@@ -780,14 +784,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           boxKey: boxKey,
           tags: []
         };
-        
+
         try {
           await storage.createDeal(dealData);
         } catch (error) {
           console.error(`Failed to create deal for ${dealData.name}:`, error);
         }
       }
-      
+
       res.status(200).json({ 
         message: "Import completed successfully",
         stats: {
@@ -796,13 +800,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           deals: boxesRecords.length
         }
       });
-      
+
     } catch (error) {
       console.error("Import error:", error);
       // Create a more detailed error response
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       res.status(500).json({ 
         message: "Failed to import data", 
         error: errorMessage,
@@ -832,11 +836,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const user = await storage.getUser(id);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
@@ -852,31 +856,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const createUserSchema = insertUserSchema.extend({
         password: z.string().min(6, "Password must be at least 6 characters"),
       });
-      
+
       const validationResult = createUserSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid user data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(validationResult.data.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       // Hash the password
       const hashedPassword = await hashPassword(validationResult.data.password);
-      
+
       // Create user with hashed password
       const newUser = await storage.createUser({
         ...validationResult.data,
         password: hashedPassword,
       });
-      
+
       // Remove password from response
       const { password, ...userWithoutPassword } = newUser;
       res.status(201).json(userWithoutPassword);
@@ -889,31 +893,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put(`${api}/users/:id`, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       // Create update schema without requiring password
       const updateUserSchema = insertUserSchema.partial();
-      
+
       const validationResult = updateUserSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid user data", 
           errors: validationResult.error.format() 
         });
       }
-      
+
       // If password is being updated, hash it
       let userData = validationResult.data;
       if (userData.password) {
         userData.password = await hashPassword(userData.password);
       }
-      
-      const updatedUser = await storage.updateUser(id, userData);
-      
+
+      const updatedUser = awaitstorage.updateUser(id, userData);
+
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Remove password from response
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
@@ -927,11 +931,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteUser(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.status(204).end();
     } catch (error) {
       console.error('Error deleting user:', error);
