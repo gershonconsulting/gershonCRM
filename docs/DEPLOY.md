@@ -4,7 +4,7 @@
 > **Goal:** Take the code from `main` → live at `https://crm.gershonCRM.com` with automated deploys on every push.
 > **Time:** ~90 min end-to-end if nothing goes sideways.
 
-Operators: read [`ARIEL_MISSION.md`](./ARIEL_MISSION.md) first — it defines who does what. [`HANDOFF.md`](./HANDOFF.md) has the project background.
+Operators: Ariel reads [`ARIEL_MISSION.md`](./ARIEL_MISSION.md) first; Charles reads [`CHARLES_MISSION.md`](./CHARLES_MISSION.md) — it defines who does what. [`HANDOFF.md`](./HANDOFF.md) has the project background.
 
 ---
 

@@ -39,7 +39,7 @@ Prerequisites you'll find in 1Password vault "GershonCRM Deploy":
 
 **Division of labor — important:**
 - **You (Ariel) handle:** all terminal/SSH work — VPS hardening, runtime install, Postgres, clone/build/PM2, nginx, certbot, backup cron. You can run `ssh`, `scp`, and interactive commands.
-- **Charles (Chrome agent) handles:** Cloudflare dashboard (Phase 5 DNS record, Phase 7 proxy toggle + SSL mode) and GitHub Secrets UI (Phase 8). When you reach those steps, output a precise instruction block for Charles and pause until Olivier confirms Charles has done it.
+- **Charles (Chrome agent) handles:** Cloudflare dashboard (Phase 5 DNS record, Phase 7 proxy toggle + SSL mode) and GitHub Secrets UI (Phase 8). His own brief is at `docs/CHARLES_MISSION.md`. When you reach those phases, tell Olivier which Charles task is up (they're numbered 1-3 in his brief) and pause until Olivier confirms Charles reported done.
 - **Olivier handles:** nothing during execution. He already did his part (VPS purchase, 1Password).
 
 **Interactive-command notes (learned the hard way, don't rediscover):**
