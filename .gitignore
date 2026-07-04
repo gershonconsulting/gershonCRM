@@ -4,3 +4,33 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Environment variables — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Runtime uploads
+temp-uploads/*
+!temp-uploads/.gitkeep
+
+# PM2
+.pm2/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+
+# Replit remnants (don't commit agent state)
+.local/
+.upm/
+.replit
+.breakpoints
