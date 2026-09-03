@@ -5,6 +5,11 @@ Checkpoint verifier — the second gate of the Ariel <-> Charles protocol.
 Charles CLAIMS a checkpoint is done. This script is the only thing allowed to
 call it VERIFIED, and the only thing allowed to call it DISPUTED.
 
+v1.1: every checkpoint is checked on every run, including OPEN ones. What is
+being verified is the OUTCOME in the world, not whether someone clicked. So an
+open checkpoint whose outcome is already true closes itself, and one that is
+not carries the live reason it is still open.
+
 Usage:
     python3 checkpoints/verify.py                 # verify this repo, rewrite INDEX.md
     python3 checkpoints/verify.py --dry-run       # report only, touch nothing
@@ -172,9 +177,26 @@ def verify_repo(root, dry=False, log=True):
         v = fm.get("verify") or {}
         detail, new = "", status
 
-        if status in ("OPEN", "CANCELLED", "BLOCKED"):
-            detail = {"OPEN": "not claimed yet", "CANCELLED": "withdrawn",
-                      "BLOCKED": "Charles reported blocked"}[status]
+        if status == "CANCELLED":
+            detail = "withdrawn"
+        elif status == "OPEN":
+            # v1.1: check OPEN checkpoints too. What matters is whether the
+            # outcome is true in the world, not whether anyone claimed it. An
+            # open checkpoint whose outcome is ALREADY true closes itself; one
+            # that is not shows the live reason it is still open.
+            ok, detail = run_check(v if isinstance(v, dict) else {})
+            if ok is None:
+                detail = "manual-attest, nobody has claimed it yet"
+            elif ok:
+                new, detail = "VERIFIED", "already true at check time - " + detail
+            else:
+                detail = "still open - " + detail
+        elif status == "BLOCKED":
+            ok, detail = run_check(v if isinstance(v, dict) else {})
+            if ok:
+                new, detail = "VERIFIED", "unblocked - " + detail
+            else:
+                detail = "reported blocked - " + (detail if ok is not None else "no machine check")
         else:
             ok, detail = run_check(v if isinstance(v, dict) else {})
             if ok is None:
