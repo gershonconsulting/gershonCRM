@@ -6,14 +6,20 @@ assigned_to: charles
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-10
-status: OPEN
+status: BLOCKED
+blocked_by: "Growth is pre-launch and has no deployment. Reopen when there is a host."
 blocks: "Growth is pre-launch and its subdomain has never resolved."
 verify:
   type: dns
   host: growth.gershoncrm.com
-claim: {}
+claim:
+  by: ariel
+  on: 2026-09-03
+  evidence: |
+    Growth is pre-launch and has no deployment to point at - the checkpoint itself says this is legitimately BLOCKED rather than open. Reopen it when Growth has a host.
 history:
   - 2026-09-03 ariel OPEN "seeded from the recurring open items in the daily status reports"
+  - 2026-09-03 ariel BLOCKED "no host to point at - see the claim"
 ---
 
 ## What to do

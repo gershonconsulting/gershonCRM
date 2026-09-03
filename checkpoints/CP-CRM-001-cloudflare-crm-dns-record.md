@@ -6,14 +6,20 @@ assigned_to: charles
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-06
-status: OPEN
+status: BLOCKED
+blocked_by: "Waiting on CP-DEC-001 (order the Hostinger KVM2 VPS) - there is no IP to point the A record at."
 blocks: "GershonCRM deploy Phase 5. Also blocked upstream on Olivier ordering the Hostinger KVM2 VPS — no VPS IP means no record."
 verify:
   type: dns
   host: crm.gershoncrm.com
-claim: {}
+claim:
+  by: ariel
+  on: 2026-09-03
+  evidence: |
+    Blocked on CP-DEC-001 - there is no VPS IP to create the A record against yet.
 history:
   - 2026-09-03 ariel OPEN "checkpoint created from CHARLES_MISSION.md Task 1"
+  - 2026-09-03 ariel BLOCKED "no host to point at - see the claim"
 ---
 
 ## What to do

@@ -6,15 +6,21 @@ assigned_to: charles
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-06
-status: OPEN
+status: BLOCKED
+blocked_by: "Waiting on CP-CRM-001, itself waiting on the VPS. Nothing to turn the proxy on for."
 blocks: "GershonCRM deploy Phase 7 — the site is not publicly reachable until this clears"
 verify:
   type: http
   url: https://crm.gershoncrm.com
   expect_status: 200
-claim: {}
+claim:
+  by: ariel
+  on: 2026-09-03
+  evidence: |
+    Blocked on CP-CRM-001, which is blocked on CP-DEC-001. Nothing to turn the proxy on for.
 history:
   - 2026-09-03 ariel OPEN "checkpoint created from CHARLES_MISSION.md Task 2"
+  - 2026-09-03 ariel BLOCKED "no host to point at - see the claim"
 ---
 
 ## What to do — in this exact order

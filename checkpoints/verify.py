@@ -14,6 +14,15 @@ Usage:
     python3 checkpoints/verify.py                 # verify this repo, rewrite INDEX.md
     python3 checkpoints/verify.py --dry-run       # report only, touch nothing
     python3 checkpoints/verify.py --rollup DIR    # sweep every repo clone under DIR
+    python3 checkpoints/verify.py --sweep         # daily sweep: only what needs a person
+    python3 checkpoints/verify.py --sweep --format html   # same, as an email fragment
+
+v1.2: --sweep. The daily status report calls this. It verifies everything, then
+prints ONLY the three states that need a human -- DISPUTED, BLOCKED, and past
+due -- and says "all clear" otherwise. A list of everything that is fine is how
+the last set of reports became unreadable; the board answers "what is the state
+of everything" on demand. --sweep never writes files, because the scheduled
+container that runs it cannot push the result anywhere.
 
 Stdlib only. No pip install, no network libs beyond urllib.
 """
@@ -219,6 +228,7 @@ def verify_repo(root, dry=False, log=True):
                      "project": fm.get("project", ""), "assigned": fm.get("assigned_to", ""),
                      "opened": str(fm.get("opened", "")), "due": str(fm.get("due", "")),
                      "blocks": fm.get("blocks", ""), "status": new, "detail": detail,
+                     "blocked_by": fm.get("blocked_by", ""),
                      "file": os.path.basename(path)})
     return rows, changes
 
@@ -270,12 +280,101 @@ def write_index(root, rows, repo_slug):
     open(os.path.join(root, "checkpoints", "INDEX.md"), "w", encoding="utf-8").write("\n".join(L))
 
 
+def is_overdue(row, today):
+    """Past its due date and still not settled. VERIFIED and CANCELLED never count."""
+    if row["status"] in ("VERIFIED", "CANCELLED"):
+        return False
+    try:
+        return datetime.date.fromisoformat(row["due"]) < today
+    except Exception:
+        return False
+
+
+def sweep_buckets(rows):
+    today = datetime.date.today()
+    disputed = [r for r in rows if r["status"] == "DISPUTED"]
+    blocked = [r for r in rows if r["status"] == "BLOCKED"]
+    seen = {id(r) for r in disputed + blocked}
+    overdue = [r for r in rows if is_overdue(r, today) and id(r) not in seen]
+    for r in overdue:
+        try:
+            r["days_over"] = (today - datetime.date.fromisoformat(r["due"])).days
+        except Exception:
+            r["days_over"] = 0
+    overdue.sort(key=lambda r: -r["days_over"])
+    return disputed, blocked, overdue
+
+
+BOARD = "https://claude.ai/code/artifact/e789270b-8c44-43e0-a923-666361c820b0"
+
+
+def reason(row):
+    """For a BLOCKED row the useful sentence is why it is blocked, not the live check
+    output -- six rows all saying 'does not resolve' tell the reader nothing."""
+    if row["status"] == "BLOCKED" and row.get("blocked_by"):
+        return row["blocked_by"]
+    return row["detail"]
+
+
+def render_sweep(rows, fmt="text"):
+    disputed, blocked, overdue = sweep_buckets(rows)
+    total = len(rows)
+    verified = sum(1 for r in rows if r["status"] == "VERIFIED")
+
+    if fmt == "html":
+        if not (disputed or blocked or overdue):
+            return ('<p style="margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:#3d6b4a">'
+                    '<strong>Checkpoints: all clear.</strong> %d of %d verified, nothing disputed, '
+                    'blocked or overdue. <a href="%s" style="color:#3d6b4a">Board</a></p>' % (verified, total, BOARD))
+        out = ['<div style="font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:#2b2724">']
+        out.append('<p style="margin:0 0 8px"><strong>Checkpoints needing a person</strong> '
+                   '<span style="color:#8a8580">(%d of %d verified)</span></p>' % (verified, total))
+        out.append('<ul style="margin:0;padding-left:18px">')
+        for label, colour, group, suffix in (
+            ("DISPUTED", "#b3261e", disputed, ""),
+            ("BLOCKED", "#8a6d1f", blocked, ""),
+            ("OVERDUE", "#8a6d1f", overdue, "d"),
+        ):
+            for r in group:
+                extra = (" &middot; %d%s late" % (r.get("days_over", 0), suffix)) if suffix else ""
+                out.append('<li style="margin:0 0 6px"><span style="color:%s;font-weight:600">%s</span> '
+                           '%s &mdash; %s <span style="color:#8a8580">(%s)%s</span><br>'
+                           '<span style="color:#8a8580">%s</span></li>'
+                           % (colour, label, r["id"], r["title"], r["assigned"], extra, reason(r)))
+        out.append('</ul>')
+        out.append('<p style="margin:8px 0 0"><a href="%s" style="color:#8a8580">Full board</a></p>' % BOARD)
+        out.append('</div>')
+        return "".join(out)
+
+    if not (disputed or blocked or overdue):
+        return "Checkpoints: all clear. %d of %d verified, nothing disputed, blocked or overdue." % (verified, total)
+
+    L = ["## Checkpoints needing a person (%d of %d verified)" % (verified, total), ""]
+    for label, group in (("DISPUTED", disputed), ("BLOCKED", blocked), ("OVERDUE", overdue)):
+        for r in group:
+            extra = " - %d day(s) late" % r.get("days_over", 0) if label == "OVERDUE" else ""
+            L.append("- **%s** %s - %s (%s)%s" % (label, r["id"], r["title"], r["assigned"], extra))
+            L.append("  %s" % reason(r))
+    L.append("")
+    L.append("Board: %s" % BOARD)
+    return "\n".join(L)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--rollup", metavar="DIR", help="directory holding several repo clones")
     ap.add_argument("--repo", default="gershonconsulting/gershonCRM")
+    ap.add_argument("--sweep", action="store_true",
+                    help="print only DISPUTED / BLOCKED / overdue; never writes files")
+    ap.add_argument("--format", choices=["text", "html"], default="text")
     a = ap.parse_args()
+
+    if a.sweep:
+        root = os.path.dirname(HERE)
+        rows, _ = verify_repo(root, dry=True)
+        print(render_sweep(rows, a.format))
+        return
 
     if a.rollup:
         allrows, tot = [], 0

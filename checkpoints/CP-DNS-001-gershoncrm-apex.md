@@ -6,14 +6,20 @@ assigned_to: charles
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-08
-status: OPEN
+status: BLOCKED
+blocked_by: "Waiting on CP-DEC-001 (the VPS). GershonCRM has no host, so the apex has nowhere to resolve to."
 blocks: "The apex has failed DNS on every daily status run since ~19 August. Every gershoncrm.com property inherits this."
 verify:
   type: dns
   host: gershoncrm.com
-claim: {}
+claim:
+  by: ariel
+  on: 2026-09-03
+  evidence: |
+    Blocked on CP-DEC-001. The apex has no host to point at: GershonCRM's deploy is waiting on the Hostinger KVM2 VPS. Pointing the apex at a placeholder would make the check go green while the site stayed dead.
 history:
   - 2026-09-03 ariel OPEN "seeded from the recurring open items in the daily status reports"
+  - 2026-09-03 ariel BLOCKED "no host to point at - see the claim"
 ---
 
 ## What to do

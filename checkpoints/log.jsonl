@@ -1,1 +1,3 @@
 {"ts": "2026-09-03T19:56:51+00:00", "id": "CP-OPS-001", "from": "CLAIMED", "to": "VERIFIED", "by": "verify.py", "detail": "https://raw.githubusercontent.com/gershonconsulting/gershonCRM/main/checkpoints/INDEX.md -> HTTP 200"}
+{"ts": "2026-09-03T22:30:01+00:00", "id": "CP-ATT-001", "from": "OPEN", "to": "VERIFIED", "by": "verify.py", "detail": "already true at check time - https://raw.githubusercontent.com/gershonconsulting/family/main/README.md -> HTTP 200"}
+{"ts": "2026-09-03T22:30:03+00:00", "id": "CP-NXS-001", "from": "CLAIMED", "to": "VERIFIED", "by": "verify.py", "detail": "'\u00c2\u00a9' is gone"}

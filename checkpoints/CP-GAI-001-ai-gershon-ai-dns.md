@@ -6,14 +6,20 @@ assigned_to: charles
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-08
-status: OPEN
+status: BLOCKED
+blocked_by: "There is no separate ai.gershon.ai app - the gershonAI repo is what gershon.ai already serves. Needs Olivier's call: point it at the hub, or drop the subdomain."
 blocks: "ai.gershon.ai has failed DNS on every daily status run since ~19 August. www.gershon.ai is in the same state."
 verify:
   type: dns
   host: ai.gershon.ai
-claim: {}
+claim:
+  by: ariel
+  on: 2026-09-03
+  evidence: |
+    There is no ai.gershon.ai app to point at. The gershonAI repo's index.html is byte-for-byte what gershon.ai already serves live - 'Gershon.AI Hub' and 'ai.gershon.ai' are one project, not two. So this is not a broken deploy, it is a subdomain for an app that does not separately exist. Needs Olivier's decision: point ai.gershon.ai at the hub, or drop it from the list.
 history:
   - 2026-09-03 ariel OPEN "longest-running dead subdomain in the portfolio"
+  - 2026-09-03 ariel BLOCKED "no host to point at - see the claim"
 ---
 
 ## What to do
