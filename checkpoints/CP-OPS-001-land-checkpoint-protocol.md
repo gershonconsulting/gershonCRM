@@ -6,7 +6,7 @@ assigned_to: ariel
 requested_by: olivier
 opened: 2026-09-03
 due: 2026-09-03
-status: CLAIMED
+status: VERIFIED
 blocks: "Nothing — this is the checkpoint that proves the checkpoint system works"
 verify:
   type: repo-file
@@ -20,6 +20,7 @@ claim:
 history:
   - 2026-09-03 ariel OPEN "Olivier asked for a checkpoint concept between Ariel and Charles, carried in the GitHub repos"
   - 2026-09-03 ariel CLAIMED "committed to main"
+  - 2026-09-03 verify VERIFIED "https://raw.githubusercontent.com/gershonconsulting/gershonCRM/main/checkpoints/INDEX.md -> HTTP 200"
 ---
 
 ## What to do
