@@ -8,6 +8,8 @@ A Streak.com-style CRM built as a **standalone platform** (no Gmail integration)
 
 - **Deploying?** Operators start at [`docs/ARIEL_MISSION.md`](./docs/ARIEL_MISSION.md)
 - **Project background** → [`docs/HANDOFF.md`](./docs/HANDOFF.md)
+- **What is outstanding right now?** → [`checkpoints/INDEX.md`](./checkpoints/INDEX.md)
+- **How requests to Charles get tracked** → [`docs/CHECKPOINTS.md`](./docs/CHECKPOINTS.md)
 - **Full deployment runbook** → [`docs/DEPLOY.md`](./docs/DEPLOY.md)
 
 ## Stack
