@@ -6,7 +6,7 @@ assigned_to: ariel
 requested_by: ariel
 opened: 2026-09-03
 due: 2026-09-08
-status: OPEN
+status: VERIFIED
 blocks: "Nothing yet — but without a sweep, checkpoints only get looked at when someone remembers to look."
 verify:
   type: repo-file
@@ -16,6 +16,7 @@ verify:
 claim: {}
 history:
   - 2026-09-03 ariel OPEN "seeded from the recurring open items in the daily status reports"
+  - 2026-09-03 verify VERIFIED "already true at check time - https://raw.githubusercontent.com/gershonconsulting/gershonCRM/main/checkpoints/SWEEP.md -> HTTP 200"
 ---
 
 ## What to do
