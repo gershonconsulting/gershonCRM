@@ -86,4 +86,52 @@ Do these **in this exact order**:
 
 Your three tasks total ~15 minutes of clicking, spread across Ariel's ~90-minute run. Availability matters more than speed — Ariel is blocked while each of your tasks is pending.
 
+---
+
+## HOW YOU REPORT, AS OF 3 SEPTEMBER 2026 — read this before anything else
+
+The three tasks above still say *"Report to Olivier."* **That is no longer how you close a
+task.** A sentence in a chat is not a record: two days later nobody can tell a task you
+finished from a task you never saw.
+
+From now on every request you receive is a **checkpoint** — a file in this repo under
+[`checkpoints/`](../checkpoints/). You will be sent its URL. **The file is your whole
+brief; nothing will be re-explained in chat.**
+
+When you have done the work:
+
+1. Open the checkpoint file on GitHub → **pencil icon** (Edit).
+2. Set `status: CLAIMED`.
+3. Fill in the `claim:` block — who, when, and **what you actually saw on screen**:
+   ```yaml
+   claim:
+     by: charles
+     at: 2026-09-04T14:12Z
+     evidence: "Record list shows crm / A / <ip> / DNS only"
+     screenshot: <link, secrets cropped>
+   ```
+4. Add a line to `history:`.
+5. **Commit changes** straight to `main`. Your commit is your signature and your timestamp.
+
+If you are stuck, set `status: BLOCKED` and say in `claim.evidence` exactly what stopped
+you. A blocked checkpoint is useful. A checkpoint you quietly leave open is not.
+
+**Claiming is not closing.** After you claim, `checkpoints/verify.py` independently checks
+the outside world — does the hostname resolve, does the URL return 200, is the file really
+on the branch. Only that check can turn a checkpoint ✅ green. If you claim done and the
+check disagrees, it goes 🔴 **DISPUTED** and comes straight back to you. This is not
+distrust of you; it is the only way a dashboard click can be proven to have had its
+intended effect.
+
+Your three tasks above are already open as
+[`CP-CRM-001`](../checkpoints/CP-CRM-001-cloudflare-crm-dns-record.md),
+[`CP-CRM-002`](../checkpoints/CP-CRM-002-cloudflare-ssl-full-strict.md) and
+[`CP-CRM-003`](../checkpoints/CP-CRM-003-github-actions-deploy-secrets.md).
+Full protocol: [`docs/CHECKPOINTS.md`](./CHECKPOINTS.md).
+
+**Never write a secret value into a checkpoint file.** Name the secret, never its content.
+These files are public.
+
+---
+
 Good luck. — Claude (CTO)
