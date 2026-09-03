@@ -1,6 +1,6 @@
 # CHECKPOINTS — the Ariel ↔ Charles completion protocol
 
-**Version 1.0 — 3 September 2026**
+**Version 1.1 — 3 September 2026**
 **Owner:** Claude (CTO) · **Applies to:** every Gershon repo, every request made to Charles
 
 ---
@@ -103,6 +103,31 @@ dashboard work has a downstream observable consequence — a DNS record resolves
 stops the redirect loop, a published page returns 200 — and that consequence is the real
 check. Prefer verifying the consequence over attesting the click.
 
+### The one rule that makes a check real: it must be FALSE today
+
+**Write the `verify:` block so that it fails at the moment you open the checkpoint, and
+run the verifier once to confirm that it does.** A check that already passes on day one is
+not a check — it is a green light wired to nothing.
+
+This is not hypothetical. Two of the checkpoints seeded on 3 September were written with
+broken checks and both went green immediately:
+
+- `CP-NXS-001` searched the NexaShare page for the literal text `\u00a9 2026` instead of
+  `© 2026`. The escape sequence is of course absent, so the defect reported itself fixed.
+  It is not: the page still shows the future-dated copyright, still duplicates a section,
+  and still renders its title as `NexaShare â€”`.
+- `CP-OPS-002` checked that `checkpoints/log.jsonl` exists — a file that already existed.
+
+Both were caught by running the verifier before publishing and looking at what went green
+too easily. A checkpoint that closes the day it opens deserves suspicion, not celebration.
+
+### Verify the consequence, not the click
+
+Where a dashboard action has an observable downstream effect, check the effect. `dns` on
+the hostname beats attesting that a record was saved; an `http` 200 from the public URL
+beats attesting that an SSL mode was selected. The click is not the outcome — a record can
+be saved with the wrong value, and a setting can be applied to the wrong zone.
+
 ### Countersigning a `manual-attest`
 
 Ariel (or Olivier) adds `countersigned_by:` and `countersigned:` to the front-matter after
@@ -171,6 +196,7 @@ Checkpoint files are public in a public repo. Crop screenshots.
 ## Ariel's side, in four lines
 
 1. Every ask to Charles → a checkpoint file, committed, before the ask is sent.
+0. Write the check so it FAILS today, and run the verifier once to prove it fails.
 2. `python3 checkpoints/verify.py` after any claim, and on every status run.
 3. `python3 checkpoints/verify.py --rollup <dir-of-clones>` to sweep every repo at once.
 4. Never hand-edit a status to `VERIFIED`. If you are tempted to, the `verify:` block was
@@ -200,4 +226,19 @@ nothing is lost.
 
 ---
 
-*Protocol v1.0 — supersedes the "Report to Olivier" convention in `CHARLES_MISSION.md`.*
+## What v1.1 changed
+
+Every checkpoint is now checked on **every** run, including `OPEN` ones — because what is
+being verified is the outcome in the world, not whether anyone clicked. Two consequences:
+
+- An open checkpoint whose outcome is **already true** closes itself. If someone fixes a
+  DNS record without touching the ledger, the ledger catches up on its own.
+- An open checkpoint that is not carries **the live reason** it is still open, so the index
+  reads "still open — crm.gershoncrm.com does not resolve" rather than "not claimed yet".
+
+The index therefore answers "what is actually true right now", not "what has someone told
+us". That is the whole point.
+
+---
+
+*Protocol v1.1 — supersedes the "Report to Olivier" convention in `CHARLES_MISSION.md`.*
