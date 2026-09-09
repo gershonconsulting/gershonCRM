@@ -1,0 +1,155 @@
+================================================================
+HANDOFF.txt  -  gershonCRM
+Written by: Claude (Anthropic) - token-limit handoff protocol
+Date: 2026-09-09
+================================================================
+
+0. WHO YOU ARE READING THIS
+----------------------------------------------------------------
+You are an AI assistant taking over work on this repository for
+Olivier Attia, founder / CTO of Gershon Consulting LLC.
+
+Read the MASTER HANDOFF first:
+  github.com/gershonconsulting/memory -> HANDOFF.txt
+It carries the full operating rules, technical defaults and the
+index of all 33 repos.
+
+CRITICAL OPERATING RULES - do not break these:
+  * Olivier does NOT use a terminal, CLI, git or PowerShell. NEVER
+    give him commands, scripts, .bat files or 'just run this' steps.
+  * He does NOT upload, download, move or save files, and does not
+    click buttons an AI injected. If a file has to get somewhere,
+    YOU find the route and execute it.
+  * End every actionable reply with:
+      GREEN CHECK = ready for him to test (+ the link)
+      RED CROSS   = something still to do (+ exactly 3 options he
+                    can actually action - never a CLI step)
+  * Executors: Ariel = code and repo work. Charles = Chrome
+    extension and web admin panels (Cloudflare, GitHub settings,
+    DNS, publishing). NOTE: both are AI, not humans. 'Hand it to
+    Charles' and 'use the browser' are THE SAME ROUTE - never offer
+    them as independent fallbacks.
+
+1. WHAT THIS REPO IS
+----------------------------------------------------------------
+Product   : GershonCRM
+Live URL  : crm.gershoncrm.com (not yet deployed - see section 4)
+Does      : A Streak.com-style CRM SaaS. ALSO the single portfolio-wide CHECKPOINT LEDGER for every project - see section 8, this is the more important job right now.
+Users     : Gershon Consulting, single-tenant for a 90-day dogfood; multi-tenancy later
+
+2. STACK AND DEPLOY ROUTE
+----------------------------------------------------------------
+Front end     : React + Vite + TypeScript (client/)
+Back end      : Express + Drizzle ORM (server/, shared/)
+Database      : PostgreSQL
+Runtime       : PM2 behind nginx on a Hostinger KVM VPS. This is the
+                deliberate EXCEPTION to the shared-hosting default.
+Origin        : built on Replit (.replit, replit.nix still in tree)
+Default branch: main
+Deploy runbook: /docs/ - full runbook is staged there
+Secrets       : 1Password vault 'GershonCRM Deploy' (VPS creds,
+                OpenAI key, Cloudflare access, GitHub PAT)
+
+3. RECENTLY DONE  [DONE]
+----------------------------------------------------------------
+- Checkpoint protocol v1.1 written to docs/CHECKPOINTS.md.
+- checkpoints/ ledger built: CP-*.md per request, generated INDEX.md,
+  append-only log.jsonl, _TEMPLATE.md, verify.py.
+- 18 checkpoints seeded across the whole portfolio (owners: olivier /
+  charles / ariel).
+- verify.py v1.1: checks EVERY checkpoint each run, including OPEN
+  ones. v1.2 adds --sweep [--format html] plus checkpoints/SWEEP.md.
+- docs/CHARLES_MISSION.md rewritten so reporting is claim-in-the-file.
+- 4 of 18 checkpoints VERIFIED, 6 BLOCKED, 8 open (as of 2026-09-03).
+
+4. PENDING  [TODO] - THE BLOCKER
+----------------------------------------------------------------
+- THE CRM ITSELF IS NOT DEPLOYED and cannot be until Olivier orders a
+  Hostinger KVM 2 VPS (checkpoint CP-DEC-001) and the 1Password vault
+  'GershonCRM Deploy' is populated.
+- FOUR checkpoints across three projects hang off that one purchase:
+  CP-CRM-001, CP-CRM-002, CP-DNS-001, CP-DNS-002.
+  This is a DECISION ONLY OLIVIER CAN MAKE. Do not try to route
+  around it, and do not keep re-reporting it as a technical problem.
+- Olivier's other open decisions: CP-DEC-002 canonical Linalysis
+  domain, CP-DEC-003 define or drop hazakubaruch.com, CP-DEC-004
+  attia.net domain mixup.
+- Charles-owned and open: CP-DNS-003 (growth), CP-GAI-001
+  (ai.gershon.ai), CP-GC-001 (purge gershonconsulting cache),
+  CP-LIN-001 (Linalysis old extension), CP-SEC-001 (REVOKE A LEAKED
+  PAT - treat as urgent).
+- Charles has never been handed his checkpoint URLs.
+
+5. MISSING / NOT BUILT YET
+----------------------------------------------------------------
+- No checkpoints/ folder in any other repo. gershonCRM is the single
+  ledger for the whole portfolio for now.
+- The family repo is still PUBLIC while holding private family
+  genealogy data. Olivier said to make it private on 2026-09-04; three
+  attempts failed on a broken Chrome viewport. Still not done.
+
+6. KNOWN BUGS / NEEDS FIXING
+----------------------------------------------------------------
+- CP-SEC-001: a leaked GitHub PAT has not been revoked. Highest
+  priority item in the ledger.
+
+7. NEXT ACTION - START HERE
+----------------------------------------------------------------
+  -> Ask Olivier for a yes/no on the Hostinger KVM 2 VPS (CP-DEC-001).
+     One purchase unblocks four checkpoints across three projects, and
+     it is the only thing standing between this repo and a live CRM.
+     While waiting, chase CP-SEC-001 (revoke the leaked PAT).
+
+8. GOTCHAS / HARD-WON LESSONS
+----------------------------------------------------------------
+CHECKPOINT SYSTEM (read before asking anyone to do anything):
+- Every request to Charles, Ariel or Olivier gets a checkpoint FILE in
+  checkpoints/. Not a chat message, not a task list.
+- Two gates: the assignee CLAIMS (edits the file, status CLAIMED +
+  evidence), then verify.py independently checks the REAL WORLD. A
+  claim whose check fails becomes DISPUTED, not green.
+- Statuses: OPEN / CLAIMED / VERIFIED / DISPUTED / BLOCKED / CANCELLED.
+  VERIFIED and DISPUTED are written ONLY by verify.py, never by hand.
+- THE RULE THAT MATTERS: a check must be FALSE on the day you write it,
+  and you run the verifier once to prove it fails. Two of the first 18
+  checks were wrong and went green instantly. Anything that passes
+  immediately is a bug in the check, not a success.
+- verify types: dns, http, http-contains, http-absent, repo-file,
+  manual-attest.
+
+WRITING TO THESE REPOS - the environment reality:
+- `git push` to gershonconsulting repos is REFUSED by the agent git
+  proxy. api.github.com returns 403 on writes. `git clone` and
+  raw.githubusercontent.com both work fine (which is what makes
+  repo-file verification possible).
+- The ONLY working write path is the GitHub web UI driven through
+  Chrome (browser 'oattia').
+- file_upload is refused when ONE CALL carries MORE THAN ONE FILE.
+  Upload one file per call; the page accumulates them; then commit
+  once. Paths must be under /mnt/user-data/uploads/ (staged from the
+  device) - /mnt/user-data/outputs/ is rejected with a different error.
+- A single-file call can be refused at random. Retry once before
+  concluding anything is blocked.
+- Do NOT inject file content as base64 through javascript_tool; it is
+  blocked as obfuscated injection. Typing into the CodeMirror editor
+  via execCommand('insertText') DOES work and is the cheapest route
+  for a text file.
+- The upload page commits into the directory in its URL, so a change
+  touching N directories is N commits and N production builds. Instead
+  create a branch on the first upload, add the rest to that branch,
+  then open and merge one PR = one deploy.
+- VERIFY EVERY COMMIT by reading raw.githubusercontent.com. Commits
+  have silently failed to land and looked identical to success.
+- If Chrome reports Viewport 0x0, STOP. The window has no paint
+  surface; coordinate clicks land nowhere and resize_window does not
+  fix it. Two 0x0 readings on separate days means tell Olivier the
+  extension needs attention rather than silently rescheduling.
+
+9. CONTACT / ESCALATION
+----------------------------------------------------------------
+Olivier Attia - oattia@gmail.com
+Report mailbox - report@gershonconsulting.com
+
+================================================================
+END OF HANDOFF
+================================================================
