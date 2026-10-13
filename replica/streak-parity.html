@@ -1,0 +1,152 @@
+<title>gershonCRM vs Streak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; score header, then findings, area bars, gap ledger, plan */
+:root{
+  --bg:#fbf9f9; --surface:#ffffff; --fg:#1d1a1b; --muted:#6b6264; --line:#e7e0e1;
+  --accent:#d7262f; --accent-soft:#fbe4e5; --ok:#2e7d4f; --ok-soft:#e1f2e7; --warn:#a86400; --warn-soft:#fbefd9;
+  --display:"Archivo",system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151213; --surface:#1e1a1b; --fg:#f1ecec; --muted:#a69c9e; --line:#352e30;
+  --accent:#ff5a61; --accent-soft:#3a1d20; --ok:#6fcf97; --ok-soft:#173226; --warn:#f2b35a; --warn-soft:#3a2a12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151213; --surface:#1e1a1b; --fg:#f1ecec; --muted:#a69c9e; --line:#352e30;
+  --accent:#ff5a61; --accent-soft:#3a1d20; --ok:#6fcf97; --ok-soft:#173226; --warn:#f2b35a; --warn-soft:#3a2a12; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body)}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:40px 64px;display:grid;gap:44px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800}
+h2{font-size:22px;font-weight:700}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+section{display:grid;gap:16px}
+.head{display:grid;gap:14px}
+.score{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.big{font:800 64px/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.big small{font-size:22px;color:var(--muted);font-weight:700}
+.stat{display:grid;gap:4px}
+.stat b{font:700 24px/1 var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.verdict{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:600 13px/1.4 var(--body)}
+ul.find{margin:0;padding-left:20px;display:grid;gap:10px}
+ul.find li{max-width:68ch}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:120px 1fr 44px;gap:12px;align-items:center;font-size:14px}
+.track{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:5px}
+.bar .mono{text-align:right;font-size:13px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font:500 12px/1.6 var(--mono)}
+.no{background:var(--accent-soft);color:var(--accent)}
+.partial{background:var(--warn-soft);color:var(--warn)}
+.yes{background:var(--ok-soft);color:var(--ok)}
+td.note{color:var(--muted)}
+ol.plan{margin:0;padding-left:22px;display:grid;gap:12px}
+ol.plan li{max-width:70ch}
+ol.plan b{font-family:var(--display)}
+.out{font-size:14px;color:var(--muted)}
+.src{font-size:13px;color:var(--muted)}
+.src a{color:inherit}
+@media (max-width:520px){.bar{grid-template-columns:92px 1fr 40px}.big{font-size:52px}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Replica recon + diff · 13 Oct 2026</div>
+    <h1>gershonCRM vs Streak</h1>
+    <p>How much of Streak's CRM the current <span class="mono">gershonconsulting/gershonCRM</span> code actually does today, scored with the Replica parity tool on 60 features. Gmail-only features are left out, per the no-Gmail scope.</p>
+    <div class="score">
+      <div class="stat"><div class="big">24<small>/100</small></div><span>feature parity</span></div>
+      <div class="stat"><b>3 of 28</b><span>must-haves working</span></div>
+      <div class="stat"><b>166</b><span>pipelines in your Streak</span></div>
+      <div class="stat"><span class="verdict">Not shippable yet</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>What the audit found</h2>
+    <ul class="find">
+      <li><b>One pipeline only.</b> The database has no pipelines table, so stages are global. You run 166 Streak pipelines, mostly one "&lt;Client&gt; - LG" pipeline per client. This is the biggest gap.</li>
+      <li><b>Fields are hard-coded.</b> Interest, Fit, Category, Next Steps, Done and Thread are fixed columns copied from the MAbSilico template. Streak lets each pipeline define its own columns.</li>
+      <li><b>No login.</b> The login libraries are installed but never wired. The role switch is never shown, so New Deal, Edit, Delete, Settings and Admin are hidden on every load.</li>
+      <li><b>Data is wiped on every restart.</b> The server reloads an April 2025 MAbSilico CSV each time it boots.</li>
+      <li><b>Several screens are mock or unreachable.</b> Emails, saved views and custom fields use fake data; Tasks has a page but no menu link; drag-and-drop kanban is not connected.</li>
+      <li><b>Deploy blocker in the code.</b> The database driver is Replit's Neon driver, which won't talk to the plain Postgres the VPS runbook installs.</li>
+      <li><b>What works:</b> contacts list and editing, moving a deal between stages, the activity timeline, and dashboards built on real numbers.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Score by area</h2>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <section>
+    <h2>Must-haves still missing</h2>
+    <p class="out">In the build order the parity tool suggests. Red = not built, amber = partly built.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Feature</th><th>Area</th><th>Now</th><th>What's there today</th></tr></thead>
+      <tbody id="gaps"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Recommended build plan</h2>
+    <ol class="plan">
+      <li><b>Rebuild the data model first.</b> Pipelines, per-pipeline stages and field definitions, organizations, several contacts per box, real users and login. Patching the current single-pipeline schema would cost more than replacing it; the screens can mostly be kept.</li>
+      <li><b>Spreadsheet grid with saved views.</b> Inline editing, sort, filter, group by any column, saved views. Your Urban Factory pipeline alone has six saved views (By Month, By Week, By Leader, By Interest, By Fit).</li>
+      <li><b>Import straight from Streak.</b> Your Streak account is connected, so the 166 pipelines, their stages, fields and boxes can be copied in directly. This replaces the boot-time CSV wipe and is the real test of readiness.</li>
+      <li><b>Box essentials.</b> Comments, tasks with assignee and due date, call logs, meeting notes, files, CSV export, global search.</li>
+      <li><b>Then the extras.</b> Webhooks and API, automations, Form.gershonCRM.com feeding boxes, and an AI box summary through the planned Intelligence menu.</li>
+      <li><b>Look and feel.</b> Built in the shared Gershon design (Linalysis layout, Gershon.ai red), not Streak's look.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Left out on purpose</h2>
+    <p class="out">Streak's Gmail features: working inside Gmail, automatic email sharing, open and click tracking, snippets, thread splitter, and mail merge. Mail merge outreach already runs through Snov.io and Straight-in; that call stays with you (roadmap Epic 6).</p>
+  </section>
+
+  <section>
+    <p class="src">Sources: Streak <a href="https://www.streak.com/pricing">pricing</a>, <a href="https://support.streak.com/en/articles/2563457-custom-columns">custom columns</a>, <a href="https://support.streak.com/en/articles/2563465-magic-columns">magic columns</a>, <a href="https://support.streak.com/en/articles/14541349-filter-sort-and-group-boxes-using-saved-views">saved views</a>, <a href="https://support.streak.com/en/articles/2563490-boxes">boxes</a>, <a href="https://www.streak.com/terms">terms</a> (no clause against building a competing product); your Streak account (pipeline list, Urban Factory - LG setup); a read-only review of the gershonCRM repo at commit 8a54f40.</p>
+  </section>
+</div>
+
+<script>
+const areas=[["search",0],["ai",0],["pipelines",10.7],["automation",11.1],["views",12.5],["timeline",23.1],["contacts",25],["team",25],["import-export",25],["tasks",30],["ux",33.3],["fields",37.5],["boxes",40],["reports",50]];
+document.getElementById("bars").innerHTML=areas.map(([a,v])=>`<div class="bar"><span>${a}</span><div class="track"><div class="fill" style="width:${v}%"></div></div><span class="mono">${v}</span></div>`).join("");
+const gaps=[
+["Delete box","boxes","no","Delete button does nothing"],
+["Several contacts per box","contacts","no","One contact per deal"],
+["Organizations","contacts","no","Company is a text field"],
+["Export pipeline to CSV","import-export","no","Not built"],
+["Create pipeline from template","pipelines","no","Not built"],
+["Multiple pipelines","pipelines","no","Stages are global"],
+["Global search","search","no","Contacts page only"],
+["Login and sessions","team","no","Libraries installed, not wired"],
+["Comments with @mentions","timeline","no","Comment box does nothing"],
+["Filter by column","views","no","Filter button does nothing"],
+["Group by any column","views","no","3 hard-coded view pages"],
+["Inline cell editing","views","no","Not built"],
+["Saved views","views","no","Mock data"],
+["Sort by any column","views","no","Not built"],
+["Create box","boxes","partial","Works, button hidden"],
+["Edit box fields","boxes","partial","Fixed fields only, button hidden"],
+["Custom text fields","fields","partial","Fixed columns only"],
+["Assigned to","fields","partial","Free text; Leader hard-coded"],
+["Checkbox fields","fields","partial","Done column only"],
+["Dropdown fields","fields","partial","Hard-coded options"],
+["CSV import","import-export","partial","Hidden; likely crashes in production"],
+["Custom stages with colours","pipelines","partial","Settings screen broken"],
+["Tasks with due date and assignee","tasks","partial","Page not in the menu"],
+["Team members and roles","team","partial","Not enforced"],
+["Spreadsheet grid","views","partial","8 fixed columns, read-only"]];
+document.getElementById("gaps").innerHTML=gaps.map(([f,a,s,n])=>`<tr><td>${f}</td><td class="mono">${a}</td><td><span class="pill ${s}">${s}</span></td><td class="note">${n}</td></tr>`).join("");
+</script>

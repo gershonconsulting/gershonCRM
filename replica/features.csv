@@ -1,0 +1,67 @@
+feature,area,priority,original,clone,notes
+Multiple pipelines (one per client),pipelines,must,yes,no,Olivier has 166 Streak pipelines; schema has no pipelines table - stages are global
+Create pipeline from template (copy pipeline),pipelines,must,yes,no,LG template reused per client (Lead > Contacted > Call Scheduled > ... > Recycled)
+Custom stages per pipeline with colours,pipelines,must,yes,partial,Stage CRUD API works; Settings UI broken (wrong apiRequest args) and hidden by role gate; colours hard-coded by name
+Reorder stages,pipelines,should,yes,no,UI calls /api/deal-stages/:id/reorder which does not exist
+Hide / archive / delete a pipeline,pipelines,could,yes,no,
+Pipeline sharing and permissions per user,pipelines,should,yes,no,No auth so no per-user access
+Create box (deal),boxes,must,yes,partial,DealForm works but New Deal button hidden by role gate; $0 value rejected
+Edit box fields,boxes,must,yes,partial,Fixed fields editable in deal dialog; Edit button role-gated
+Delete box,boxes,must,yes,no,Delete button has no onClick
+Move box between stages,boxes,must,yes,yes,Stage select in row and dialog; logs activity (daysInStage not reset)
+Move box to another pipeline,boxes,should,yes,no,Only one pipeline exists
+Spreadsheet grid view grouped by stage,views,must,yes,partial,Grouped list with 8 fixed columns; not inline-editable; group collapse dead
+Inline cell editing in grid,views,must,yes,no,
+Sort by any column,views,must,yes,no,
+Filter by column with operators (is / contains / before / is set),views,must,yes,no,Filter button has no handler
+Group by any column,views,must,yes,no,Only by-fit / by-interest / by-month pages with hard-coded values
+Saved views (named filter+sort+group),views,must,yes,no,ViewManager is mock with simulated API calls
+Hide / freeze / reorder / resize columns,views,should,yes,partial,Header drag/resize only; state in useState inside IIFE (rules-of-hooks bug)
+Custom fields per pipeline: text,fields,must,yes,partial,Fixed columns only (thread / industry style); customFields jsonb unused
+Custom fields: dropdown,fields,must,yes,partial,Interest / Fit / Category / Next Steps exist as fixed columns with hard-coded options
+Custom fields: tag (multi-select),fields,should,yes,no,tags column exists but never written
+Custom fields: date,fields,should,yes,no,
+Custom fields: checkbox,fields,must,yes,partial,Done is a fixed column only
+Custom fields: assigned to,fields,must,yes,partial,assignedTo is free text; Leader dropdown is hard-coded
+Custom fields: formula,fields,could,yes,no,
+Magic columns: days in stage / last stage change,fields,should,yes,partial,daysInStage is a static imported number never recomputed
+Magic columns: last updated / created / creator,fields,should,yes,partial,createdAt only
+Magic columns: task counts / next task due,fields,should,yes,partial,nextTaskDueDate static import value
+Magic columns: last interaction / freshness,fields,could,yes,no,
+Contacts list and CRUD,contacts,must,yes,yes,Works; crashes on null email (contacts.tsx:40); no sidebar link
+Organizations entity linked to contacts,contacts,must,yes,no,Company is only a text field on contact
+Multiple contacts per box,contacts,must,yes,no,One contactId per deal; Add contact button has no handler
+Contact detail with all their boxes,contacts,should,yes,no,
+Contact enrichment,contacts,could,yes,no,
+Tasks on a box with due date and assignee,tasks,must,yes,partial,API works; Tasks page exists but not routed; no assignee field in form
+Task reminders / notifications,tasks,should,yes,no,reminderDate in schema only
+Comments on a box with @mentions,timeline,must,yes,no,Comment input has no handler
+Activity timeline per box,timeline,must,yes,yes,Auto-logged on stage / field / contact edits
+Call logs,timeline,should,yes,no,
+Meeting notes,timeline,should,yes,no,
+File attachments on a box,timeline,should,yes,no,
+Follow a box / notifications,timeline,could,yes,no,Bell button has no handler
+Linked boxes across pipelines,boxes,could,yes,no,
+Team members and roles,team,must,yes,partial,Role map hard-coded client-side; selector never mounted so all gated UI hidden; server enforces nothing
+Login and sessions,team,must,yes,no,passport / express-session installed but not wired; ROADMAP wrongly says shipped
+CSV import into a pipeline,import-export,must,yes,partial,Streak CSV import API works but tab hidden and __dirname likely crashes in prod
+Export pipeline to CSV,import-export,must,yes,no,
+Migrate from Streak (pipelines + boxes + contacts),import-export,must,no,partial,Gershon-specific: one hard-coded MAbSilico CSV wipes the DB on every boot; Streak API/MCP migration not built
+Pipeline reports / dashboards,reports,should,yes,partial,Real aggregates from one pipeline; some stat chips hard-coded (5.3% 12.5% 24.7%)
+Funnel reports,reports,could,yes,partial,Stage counts only
+Global search,search,must,yes,no,Header search removed; contacts page search only
+Keyboard shortcuts,ux,could,yes,no,
+Mobile usable,ux,should,yes,partial,Sidebar collapses; grid and dialog fixed widths
+AI box summary,ai,should,yes,no,openai installed but unused - Intelligence menu plan says Cloudflare Workers AI
+AI ask a question about a box,ai,could,yes,no,
+AI autofill fields,ai,could,yes,no,
+Automations (trigger > action),automation,should,yes,no,
+Webhooks,automation,should,yes,no,
+Public API with keys,automation,should,yes,no,
+Integrations: forms / Calendly / Typeform,automation,could,yes,no,Form.gershonCRM.com could feed this directly
+LinkedIn lead capture into a box,automation,should,yes,partial,Thread field holds the LinkedIn URL only
+Email inside Gmail (sidebar / thread to box),email,could,yes,skip,Scope guard: gershonCRM is standalone - no Gmail integration
+Automatic email sharing from Gmail,email,could,yes,skip,Scope guard: no Gmail
+Email tracking (opens / clicks),email,could,yes,skip,Gmail extension feature - out of scope
+Mail merge with follow-ups,email,could,yes,skip,Outreach handled by Snov.io / Straight-in - decision pending (ROADMAP Epic 6)
+Snippets / thread splitter,email,could,yes,skip,Gmail extension features
