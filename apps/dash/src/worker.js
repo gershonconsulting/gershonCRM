@@ -1,0 +1,70 @@
+// Dash weekly board - Cloudflare Worker (dash.gershoncrm.com)
+//
+// Why the live board went stale: snapshots were only ever made when somebody
+// opened a week URL; there was no schedule. This Worker fixes that with:
+//   1. a Monday cron (wrangler.toml [triggers]) that stores last week's board;
+//   2. a self-heal: if the newest stored week is older than last ISO week,
+//      the first visit kicks off ONE background refresh (at most every 6 h).
+// Visitors can no longer create arbitrary weeks by typing /w/<week>.
+
+import { renderBoard, renderMissing, weekRange } from './render.js';
+import { collectWeek, previousIsoWeek } from './collect.js';
+
+const SECURITY_HEADERS = {
+  'content-type': 'text/html; charset=utf-8',
+  'cache-control': 'no-store',
+  'x-robots-tag': 'noindex, nofollow',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'x-frame-options': 'DENY',
+};
+
+const html = (body, status = 200) => new Response(body, { status, headers: SECURITY_HEADERS });
+
+async function readIndex(env) {
+  return (await env.BOARD.get('index', 'json')) || [];   // [{week, range}] newest first
+}
+
+export async function generate(env, wk, deps) {
+  const snap = await collectWeek(env, wk, deps);
+  await env.BOARD.put(`snap:${wk.week}`, JSON.stringify(snap));
+  const index = (await readIndex(env)).filter(w => w.week !== wk.week);
+  index.unshift({ week: wk.week, range: weekRange(snap) });
+  index.sort((a, b) => (a.week < b.week ? 1 : -1));
+  await env.BOARD.put('index', JSON.stringify(index.slice(0, 104)));
+  console.log(`[dash] stored ${wk.week} (${snap.platforms.filter(p => p.status === 'connected').length}/${snap.platforms.length} connected)`);
+  return snap;
+}
+
+async function selfHeal(env, index, now = new Date()) {
+  const want = previousIsoWeek(now).week;
+  if (index[0] && index[0].week >= want) return;
+  if (await env.BOARD.get('refresh-lock')) return;
+  await env.BOARD.put('refresh-lock', now.toISOString(), { expirationTtl: 6 * 3600 });
+  console.warn(`[dash] newest stored week is ${index[0] ? index[0].week : 'none'}, expected ${want}: self-healing`);
+  await generate(env, previousIsoWeek(now));
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
+    const url = new URL(request.url);
+    const index = await readIndex(env);
+    ctx.waitUntil(selfHeal(env, index).catch(e => console.error('[dash] self-heal failed', e)));
+
+    let week;
+    if (url.pathname === '/' || url.pathname === '') week = index[0] && index[0].week;
+    else {
+      const m = url.pathname.match(/^\/w\/(\d{4}-W\d{2})\/?$/);
+      if (!m) return html(renderMissing(null, index), 404);
+      week = m[1];
+    }
+    const snap = week ? await env.BOARD.get(`snap:${week}`, 'json') : null;
+    if (!snap || !Array.isArray(snap.platforms)) return html(renderMissing(week, index), 404);
+    return html(renderBoard(snap, index, new Date()));
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(generate(env, previousIsoWeek(new Date(event.scheduledTime))));
+  },
+};
