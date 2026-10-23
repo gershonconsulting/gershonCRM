@@ -153,3 +153,59 @@ Report mailbox - report@gershonconsulting.com
 ================================================================
 END OF HANDOFF
 ================================================================
+
+================================================================
+2026-10-23 nightly  -  Dash weekly board (dash.gershoncrm.com)
+Branch: nightly/2026-10-23-dash-fixes  (PR to main, NOT merged)
+================================================================
+CONTEXT: the live Dash board is a Cloudflare Worker whose source was
+never in GitHub (searched every branch of every gershonconsulting repo).
+This branch adds a rebuilt, fixed version in apps/dash/ so it finally
+lives in a repo. gershonCRM was chosen because dash is part of the
+*.gershoncrm.com suite (see report/README.md).
+
+WHY IT WAS STALE SINCE 6 OCT (found by reading the live pages):
+- There is no schedule. A week's board is only created when somebody
+  opens a /w/<week> link; the home page then shows the newest stored
+  week. W35 was made on 6 Sep and W40 on 6 Oct, both by a visit.
+- Proof: at 02:02 UTC on 23 Oct this nightly run opened
+  /w/2026-W42 (read-only GET) and the Worker created and stored W42;
+  the home page switched to W42 straight away. (That is the only
+  change this run caused on the live site.)
+- Side effect of the same design: any visitor can make the Worker
+  call all five platforms by typing week URLs.
+
+DONE  [ready to test - preview: "Dash Board Preview" artifact,
+       sample data; tests: node --test apps/dash/test/dash.test.mjs]
+- No secret / env-var names, HTTP codes or error text on the page.
+  Public line: "Some platform connections are not set up yet (n of 5)"
+  (n = platforms not working). Names go to the Worker logs only.
+- Freshness banner "Generated <date> · <N> days old": green, orange
+  after 8 days, red after 15 days; it updates itself if the tab stays
+  open.
+- "Data source: <host> · ..." line on every platform tile.
+- Empty figures and unconnected platforms say "Not connected yet",
+  never 0. KPI row: On track / Watch / Action needed / Not connected
+  yet, each with a one-line meaning.
+- Unified Gershon design (Linalysis shell, #CC3333, 12px cards, red
+  active pill for the current week); phone 390px: weeks become a pill
+  row, no sideways scroll. Version shown: Dash v1.1.
+- Staleness fix: Monday 06:07 UTC cron + one self-heal refresh (max
+  every 6 h) if the newest week is behind. Typing a week URL no longer
+  creates it. noindex + no-store headers.
+
+STILL TO DO  [not done]
+- Deploy: the live Worker is not Git-connected. Charles (Cloudflare
+  dashboard) must (1) copy the live Worker's name and KV namespace id
+  into apps/dash/wrangler.toml, (2) compare the upstream endpoints in
+  apps/dash/src/collect.js with the live Worker's code (they are the
+  expected contract, not copied from the original), (3) deploy and
+  check the Cron Trigger shows "7 6 * * 1". Old stored weeks in the
+  previous format will show "not generated yet" until re-run.
+- No login (Olivier's decision). Ready option in the PR: Cloudflare
+  Access on dash.gershoncrm.com, allow oattia@gmail.com and
+  @gershonconsulting.com, sign-in by one-time e-mail code (or LinkedIn
+  as the identity provider). No code change needed.
+- Still public today: the W35 page lists client names and post counts.
+- Social now answers 401 to the board: it needs SOCIAL_TOKEN once the
+  Social app issues one.

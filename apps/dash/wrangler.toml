@@ -1,0 +1,24 @@
+# Dash weekly board - dash.gershoncrm.com
+# Before deploying: set `name` and the KV `id` to the ones the LIVE Worker uses
+# (Cloudflare dashboard -> Workers & Pages -> the Worker on dash.gershoncrm.com
+# -> Settings -> Bindings), so existing weeks (W35, W40, W42) are kept.
+name = "dash-gershoncrm"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+routes = [{ pattern = "dash.gershoncrm.com/*", zone_name = "gershoncrm.com" }]
+
+[[kv_namespaces]]
+binding = "BOARD"
+id = "REPLACE_WITH_LIVE_KV_NAMESPACE_ID"
+
+# THE STALENESS FIX: run every Monday 06:07 UTC (08:07 Paris summer time,
+# 07:07 winter) and store last week's board.
+[triggers]
+crons = ["7 6 * * 1"]
+
+[observability]
+enabled = true
+
+# Secrets (set in the dashboard, never in this file):
+# CLIENT_EMAIL, CLIENT_PASSWORD, SOCIAL_TOKEN, LINALYSIS_TOKEN, FINANCE_TOKEN, NEXASHARE_TOKEN
