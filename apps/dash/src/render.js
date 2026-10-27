@@ -32,17 +32,31 @@ export function freshness(generatedAt, now = new Date()) {
 
 const hasValue = m => m && m.value !== null && m.value !== undefined && m.value !== '';
 
-/** Headline counts. A metric with no value is "not connected yet", never 0. */
+/**
+ * One state per platform: 'green' | 'amber' | 'red' | 'nodata'.
+ * A platform that is not connected, did not answer, or sent no filled figure
+ * is "No data". It is never counted as "On track" (the live W42 board said
+ * "5 on track" with 0 of 5 platforms connected, because service-health rows
+ * such as "Service: ok" were counted as on-track figures).
+ */
+export function platformState(p) {
+  if (!p || p.status !== 'connected') return 'nodata';
+  const tones = (p.metrics || []).filter(hasValue).map(m => m.tone);
+  if (!tones.length) return 'nodata';
+  if (tones.includes('red')) return 'red';
+  if (tones.includes('amber')) return 'amber';
+  if (tones.includes('green')) return 'green';
+  return 'nodata';
+}
+
+/** Headline counts, per PLATFORM. Empty figures are counted separately, never as 0. */
 export function summarise(snap) {
-  const s = { green: 0, amber: 0, red: 0, empty: 0, connected: 0, notReady: 0 };
+  const s = { green: 0, amber: 0, red: 0, nodata: 0, empty: 0, connected: 0, notReady: 0, total: 0 };
   for (const p of snap.platforms || []) {
+    s.total++;
     if (p.status === 'connected') s.connected++; else s.notReady++;
-    for (const m of p.metrics || []) {
-      if (!hasValue(m)) s.empty++;
-      else if (m.tone === 'green') s.green++;
-      else if (m.tone === 'amber') s.amber++;
-      else if (m.tone === 'red') s.red++;
-    }
+    s[platformState(p)]++;
+    if (p.status === 'connected') for (const m of p.metrics || []) if (!hasValue(m)) s.empty++;
   }
   return s;
 }
@@ -55,11 +69,8 @@ export function connectionLine(snap) {
 }
 
 function platformDot(p) {
-  if (p.status !== 'connected') return 'grey';
-  const tones = (p.metrics || []).filter(hasValue).map(m => m.tone);
-  if (tones.includes('red')) return 'red';
-  if (tones.includes('amber')) return 'amber';
-  return tones.length ? 'green' : 'grey';
+  const st = platformState(p);
+  return st === 'nodata' ? 'grey' : st;
 }
 
 const STATUS_WORDS = {
@@ -79,7 +90,7 @@ function metricHtml(m) {
   const filled = hasValue(m);
   const val = filled
     ? `<span class="pill ${esc(m.tone || 'grey')}">${esc(m.value)}</span>`
-    : `<span class="pill empty">Not connected yet</span>`;
+    : `<span class="pill empty">No data</span>`;
   const hint = m.hint ? `<span class="hint">${esc(m.hint)}</span>` : '';
   return `<div class="m"><div class="lbl">${esc(m.label)}${hint}</div>${val}</div>`;
 }
@@ -113,8 +124,20 @@ function tileHtml(p) {
 </section>`;
 }
 
-function kpi(label, n, tone, help) {
-  return `<div class="kpi ${tone}"><span class="kn">${n}</span><span class="kl">${label}</span><span class="kh">${help}</span></div>`;
+function kpi(label, n, total, tone, help) {
+  return `<div class="kpi ${tone}"><span class="kn">${n}<small> / ${total}</small></span><span class="kl">${label}</span><span class="kh">${help}</span></div>`;
+}
+
+/** Plain-words panel shown when no platform sent any figure this week. */
+function emptyStateHtml(s) {
+  if (s.green + s.amber + s.red > 0) return '';
+  const none = s.connected === 0;
+  return `<div class="emptystate" role="note">
+  <strong>${none ? 'No platform is connected to the board yet' : 'No platform sent any figures this week'}</strong>
+  <p>${none
+    ? `The board itself is working, but none of the ${s.total} platforms is linked to it yet, so there are no figures to show. That is why every platform below says "No data". Once a platform is linked, its figures appear here on the next Monday refresh.`
+    : 'The connected platforms answered, but without any figures for this week. Every platform below therefore shows "No data" rather than a number.'}</p>
+</div>`;
 }
 
 export const CSS = `
@@ -167,6 +190,11 @@ h1{font-size:24px;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--line)}
 .kpi.green{border-top-color:var(--g-fg)}.kpi.amber{border-top-color:var(--a-fg)}.kpi.red{border-top-color:var(--r-fg)}.kpi.grey{border-top-color:var(--n-fg)}
 .kn{font:600 28px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.kn small{font-size:14px;font-weight:500;color:var(--muted)}
+.emptystate{background:var(--card);border:1px dashed var(--n-fg);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.emptystate strong{font-size:16px}
+.emptystate p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+.fresh .lead b{font-family:var(--mono);font-weight:600}
 .kl{font-weight:600;font-size:14px}
 .kh{font-size:12.5px;color:var(--muted);line-height:1.35}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:10px 0 0;font-weight:600}
@@ -219,9 +247,24 @@ tr:last-child td{border-bottom:none}
 // Keeps the "N days old" banner honest if the tab stays open for days.
 const FRESH_JS = `<script>(function(){var b=document.querySelector('[data-generated]');if(!b)return;
 var g=new Date(b.getAttribute('data-generated'));var d=Math.max(0,Math.floor((Date.now()-g)/864e5));
-var t=d>${STALE_RED_DAYS}?'red':d>${STALE_AMBER_DAYS}?'amber':'green';
+var t=d>${STALE_RED_DAYS}?'red':d>${STALE_AMBER_DAYS}?'amber':'green';var miss=b.getAttribute('data-missing');if(miss&&t==='green')t='amber';
 b.className='fresh '+t;var s=b.querySelector('.age');if(s)s.textContent=d===0?'today':d===1?'1 day old':d+' days old';
-var w=b.querySelector('.why');if(w)w.textContent=t==='green'?'Up to date':t==='amber'?'Older than ${STALE_AMBER_DAYS} days: this week may not have been generated yet':'Older than ${STALE_RED_DAYS} days: the weekly refresh is not running';})();</script>`;
+var w=b.querySelector('.why');if(w)w.textContent=whyText(t,d,miss);
+function whyText(t,d,miss){var m=miss?miss+' has not been generated yet. ':'';
+return t==='green'?'Up to date':t==='amber'?m+(d>${STALE_AMBER_DAYS}?'Older than ${STALE_AMBER_DAYS} days.':''):m+'Older than ${STALE_RED_DAYS} days: the weekly refresh is not running.';}})();</script>`;
+
+/** Banner tone + explanation. `expectedWeek` = the ISO week that should exist by now (home page only). */
+export function bannerState(snap, now = new Date(), expectedWeek = null) {
+  const f = freshness(snap.generatedAt, now);
+  const missing = expectedWeek && snap.week < expectedWeek ? expectedWeek : null;
+  let tone = f.tone;
+  if (missing && tone === 'green') tone = 'amber';
+  const m = missing ? `${missing} has not been generated yet. ` : '';
+  const why = tone === 'green' ? 'Up to date'
+    : tone === 'amber' ? m + (f.days > STALE_AMBER_DAYS ? `Older than ${STALE_AMBER_DAYS} days.` : '')
+    : m + `Older than ${STALE_RED_DAYS} days: the weekly refresh is not running.`;
+  return { ...f, tone, missing, why: why.trim() };
+}
 
 function sidebar(weeks, current) {
   const items = (weeks || []).map(w => `<li><a class="${w.week === current ? 'on' : ''}" href="/w/${esc(w.week)}"${w.week === current ? ' aria-current="page"' : ''}>${esc(w.week)}${w.range ? `<small>${esc(w.range)}</small>` : ''}</a></li>`).join('');
@@ -240,7 +283,13 @@ export function weekRange(snap) {
   return `${a.getUTCDate()}${sameMonth ? '' : ' ' + MONTHS[a.getUTCMonth()]} – ${fmtDate(b)}`;
 }
 
-function page(title, inner, weeks, current, { fragment = false, topBar = '' } = {}) {
+// Safety net for snapshots written by the old live Worker (W35, W40, W42),
+// which stored text such as "Missing secret(s): LINALYSIS_TOKEN".
+const SECRET_NAME_RE = /\b[A-Z][A-Z0-9]*_(?:TOKEN|PASSWORD|EMAIL|SECRET|KEY|API_KEY)\b/g;
+export const scrubSecrets = t => String(t).replace(SECRET_NAME_RE, '[hidden]');
+
+function page(title, inner0, weeks, current, { fragment = false, topBar = '' } = {}) {
+  const inner = scrubSecrets(inner0);
   const fonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">`;
   const body = `${topBar}<div class="shell">${sidebar(weeks, current)}<main class="main"><div class="inner">${inner}</div></main></div>${FRESH_JS}`;
@@ -255,36 +304,35 @@ ${fonts}
 
 /** Full board for one stored weekly snapshot. */
 export function renderBoard(snap, weeks, now = new Date(), opts = {}) {
-  const f = freshness(snap.generatedAt, now);
+  const f = bannerState(snap, now, opts.expectedWeek);
   const s = summarise(snap);
   const conn = connectionLine(snap);
-  const why = f.tone === 'green' ? 'Up to date'
-    : f.tone === 'amber' ? `Older than ${STALE_AMBER_DAYS} days: this week may not have been generated yet`
-    : `Older than ${STALE_RED_DAYS} days: the weekly refresh is not running`;
+  const why = f.why;
   const inner = `
 <header>
   <h1>Weekly Board · ${esc(snap.week)}</h1>
   <p class="sub">${esc(weekRange(snap))} · last week's activity across every platform (Monday to Sunday, Paris time)</p>
 </header>
-<div class="fresh ${f.tone}" role="status" data-generated="${esc(new Date(snap.generatedAt).toISOString())}">
-  <span>Generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
-  <span class="why">${why}</span>
+<div class="fresh ${f.tone}" role="status" data-generated="${esc(new Date(snap.generatedAt).toISOString())}"${f.missing ? ` data-missing="${esc(f.missing)}"` : ''}>
+  <span class="lead">Latest report: <b>${esc(snap.week)}</b> (${esc(weekRange(snap))}) · generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
+  <span class="why">${esc(why)}</span>
 </div>
 <div class="conn ${conn.ok ? 'ok' : 'off'}">${esc(conn.text)}</div>
 <div class="kpis">
-  ${kpi('On track', s.green, 'green', 'Figures at or above target')}
-  ${kpi('Watch', s.amber, 'amber', 'Slipping, keep an eye on it')}
-  ${kpi('Action needed', s.red, 'red', 'Below target, needs a follow-up')}
-  ${kpi('Not connected yet', s.notReady + s.empty, 'grey', 'Platforms or figures with no data yet')}
+  ${kpi('On track', s.green, s.total, 'green', 'Platforms with every figure at or above target')}
+  ${kpi('Watch', s.amber, s.total, 'amber', 'Platforms with a figure slipping')}
+  ${kpi('Action needed', s.red, s.total, 'red', 'Platforms with a figure below target')}
+  ${kpi('No data', s.nodata, s.total, 'grey', 'Not connected, not responding, or no figures this week')}
 </div>
+${emptyStateHtml(s)}
 <h2>Platform by platform</h2>
 <div class="tiles">${(snap.platforms || []).map(tileHtml).join('')}</div>
 <div class="legend">
   <span><span class="dot green"></span>On track</span>
   <span><span class="dot amber"></span>Watch</span>
   <span><span class="dot red"></span>Action needed</span>
-  <span><span class="dot"></span>Not connected yet</span>
-  <span>Banner turns orange after ${STALE_AMBER_DAYS} days and red after ${STALE_RED_DAYS} days.</span>
+  <span><span class="dot"></span>No data</span>
+  <span>Counts are per platform. The banner turns orange after ${STALE_AMBER_DAYS} days or when last week is missing, and red after ${STALE_RED_DAYS} days.</span>
 </div>`;
   return page(opts.title || `Weekly Board — ${snap.week} · dash.gershoncrm.com`, inner, weeks, snap.week, opts);
 }
