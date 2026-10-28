@@ -1,8 +1,8 @@
 // Run: node --test apps/dash/test/dash.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderBoard, freshness, connectionLine, summarise, bannerState, scrubSecrets } from '../src/render.js';
-import { collectWeek, previousIsoWeek, isoWeekLabel, PLATFORMS } from '../src/collect.js';
+import { renderBoard, renderPreparing, VERSION, freshness, connectionLine, summarise, bannerState, scrubSecrets } from '../src/render.js';
+import { collectWeek, previousIsoWeek, currentIsoWeek, boardWeek, isoWeekLabel, PLATFORMS } from '../src/collect.js';
 import worker from '../src/worker.js';
 import { sampleSnapshot, sampleWeeks } from './sample-snapshot.mjs';
 
@@ -99,4 +99,49 @@ test('old snapshots with secret names in free text are scrubbed', () => {
   const page = renderBoard(snap, [], new Date('2026-10-23'));
   for (const s of ['FINANCE_TOKEN', 'NEXASHARE_TOKEN', 'CLIENT_PASSWORD']) assert.ok(!page.includes(s), s);
   assert.equal(scrubSecrets('LINALYSIS_TOKEN and CLIENT_EMAIL'), '[hidden] and [hidden]');
+});
+
+// ---- v1.2: current-week board + landing page --------------------------------
+
+test('current ISO week (v1.2 board week)', () => {
+  assert.deepEqual(currentIsoWeek(new Date('2026-10-28T09:00:00Z')), { week: '2026-W44', start: '2026-10-26', end: '2026-11-01' });
+  assert.deepEqual(currentIsoWeek(new Date('2026-11-02T12:15:00Z')), { week: '2026-W45', start: '2026-11-02', end: '2026-11-08' });
+  assert.equal(currentIsoWeek(new Date('2026-11-01T23:59:00Z')).week, '2026-W44');   // Sunday still W44
+  assert.equal(currentIsoWeek(new Date('2027-01-01T10:00:00Z')).week, '2026-W53');
+  assert.equal(boardWeek(new Date('2026-10-28T09:00:00Z')).week, '2026-W44');
+  assert.equal(VERSION, '1.2');
+});
+
+test('landing page shows "being prepared" instead of an old week', async () => {
+  const BOARD = memKV({ index: [{ week: '2026-W42', range: '12 – 18 Oct 2026' }], 'snap:2026-W42': { ...sampleSnapshot }, 'refresh-lock': 'x' });
+  const ctx = { waitUntil: () => {} };
+  const r = await worker.fetch(new Request('https://dash.gershoncrm.com/'), { BOARD }, ctx);
+  const page = await r.text();
+  const cur = currentIsoWeek(new Date()).week;
+  assert.equal(r.status, 200);
+  assert.ok(page.includes("This week's board is being prepared"));
+  assert.ok(page.includes(`Weekly Board · ${cur}`));
+  assert.ok(!page.includes('Weekly Board · 2026-W42'), 'must not present the old week as the board');
+  assert.ok(page.includes('href="/w/2026-W42"'), 'older weeks stay reachable in the week list');
+  assert.match(page, new RegExp(`class="on" href="/w/${cur}"`));
+});
+
+test('landing page shows the current week once it exists; old week links still work', async () => {
+  const cur = currentIsoWeek(new Date());
+  const BOARD = memKV({ index: [{ week: cur.week }, { week: '2026-W42' }], [`snap:${cur.week}`]: { ...sampleSnapshot, week: cur.week, start: cur.start, end: cur.end, generatedAt: new Date().toISOString() }, 'snap:2026-W42': { ...sampleSnapshot } });
+  const ctx = { waitUntil: () => {} };
+  const home = await (await worker.fetch(new Request('https://dash.gershoncrm.com/'), { BOARD }, ctx)).text();
+  assert.ok(home.includes(`Weekly Board · ${cur.week}`));
+  assert.ok(home.includes('Up to date'));
+  assert.ok(!home.includes('being prepared'));
+  const old = await worker.fetch(new Request('https://dash.gershoncrm.com/w/2026-W42'), { BOARD }, ctx);
+  assert.equal(old.status, 200);
+  assert.ok((await old.text()).includes('Weekly Board · 2026-W42'));
+});
+
+test('preparing page carries no secret names and is phone-safe markup', () => {
+  const page = renderPreparing(currentIsoWeek(new Date('2026-10-28')), sampleWeeks);
+  for (const s of SECRET_NAMES) assert.ok(!page.includes(s));
+  assert.ok(page.includes('26 Oct – 1 Nov 2026'));
+  assert.ok(page.includes('Dash v1.2'));
 });
