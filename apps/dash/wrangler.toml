@@ -12,10 +12,11 @@ routes = [{ pattern = "dash.gershoncrm.com/*", zone_name = "gershoncrm.com" }]
 binding = "BOARD"
 id = "REPLACE_WITH_LIVE_KV_NAMESPACE_ID"
 
-# THE STALENESS FIX: run every Monday 06:07 UTC (08:07 Paris summer time,
-# 07:07 winter) and store last week's board.
-[triggers]
-crons = ["7 6 * * 1"]
+# v1.2: NO cron here. The Monday schedule lives in the separate
+# gershon-dash-cron Worker (apps/dash-cron/wrangler.toml, "15 12 * * 1"),
+# which creates/refreshes the current ISO week's board in the same KV.
+# (If a Cron Trigger "7 6 * * 1" was added to this Worker from PR #1,
+# remove it in the dashboard so the board is not built twice.)
 
 [observability]
 enabled = true

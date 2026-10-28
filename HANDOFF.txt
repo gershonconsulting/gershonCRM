@@ -209,3 +209,46 @@ STILL TO DO  [not done]
 - Still public today: the W35 page lists client names and post counts.
 - Social now answers 401 to the board: it needs SOCIAL_TOKEN once the
   Social app issues one.
+
+================================================================
+2026-10-28 nightly  -  Dash v1.2: Monday cron Worker + current week
+Branch: nightly/2026-10-28-dash-cron  (PR into
+        nightly/2026-10-23-dash-fixes = PR #1; NOT merged)
+================================================================
+PROBLEM: on 28 Oct (W44) dash.gershoncrm.com still showed W42. A week's
+board is only built when someone opens its link, and the live
+gershon-dash-cron Worker is the empty Cloudflare template.
+
+DONE  [ready to test: node --test apps/dash/test/dash.test.mjs
+       apps/dash-cron/test/cron.test.mjs  -> 16 tests pass]
+- apps/dash-cron/ = the real gershon-dash-cron Worker.
+  wrangler.toml: name "gershon-dash-cron", cron "15 12 * * 1"
+  (Monday 12:15 UTC), KV binding BOARD. src/index.js calls
+  refreshBoard() from apps/dash/src/worker.js (the SAME week-creation
+  code: generate -> collectWeek). No figures are invented: a platform
+  with no secret / no answer is stored as "not connected".
+- The job builds the CURRENT ISO week (W44 = 26 Oct - 1 Nov). Running
+  it again in the same week overwrites (= refresh). Switch back to
+  "last completed week" = BOARD_WEEK_MODE in apps/dash/src/collect.js.
+- Home page now always targets the current week. If it is not built
+  yet it shows "This week's board is being prepared" (old weeks stay
+  in the week list), never an older week as if it were current.
+- The dash Worker's own cron ("7 6 * * 1" from PR #1) is removed from
+  apps/dash/wrangler.toml so the board is not built twice.
+- Version: Dash v1.2.
+
+DEPLOY STEPS  [not done - Charles (Cloudflare dashboard) / Ariel]
+1. First do PR #1's deploy steps (live Worker name + KV id into
+   apps/dash/wrangler.toml, check collect.js endpoints, deploy dash).
+2. Copy the SAME KV namespace id into apps/dash-cron/wrangler.toml.
+3. Deploy apps/dash-cron over the existing gershon-dash-cron Worker
+   (wrangler deploy from apps/dash-cron - it bundles ../dash/src).
+4. On gershon-dash-cron -> Settings -> Variables and Secrets: add the
+   same platform secrets as the dash Worker (CLIENT_EMAIL,
+   CLIENT_PASSWORD, SOCIAL_TOKEN, LINALYSIS_TOKEN, FINANCE_TOKEN,
+   NEXASHARE_TOKEN). Missing ones only mean "Not connected yet".
+5. gershon-dash-cron -> Settings -> Triggers: check the Cron Trigger
+   reads "15 12 * * 1". On the dash Worker, delete any "7 6 * * 1".
+6. Test once: gershon-dash-cron -> Triggers -> Cron -> run / or wait
+   for Monday; then dash.gershoncrm.com must show the current week
+   and the Logs show "[dash-cron] 2026-Wxx refreshed".
