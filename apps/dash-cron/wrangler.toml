@@ -1,0 +1,32 @@
+# gershon-dash-cron - the Monday scheduler for the Dash weekly board
+# (dash.gershoncrm.com). Replaces the empty "Hello World" template that the
+# live gershon-dash-cron Worker runs today.
+#
+# Every Monday 12:15 UTC (13:15 Paris winter time, 14:15 summer time) it
+# creates - or, if it already exists, refreshes - the CURRENT ISO week's board.
+# It reuses the board's own week-creation code (apps/dash/src/worker.js ->
+# refreshBoard -> generate -> collectWeek); wrangler bundles it from ../dash.
+name = "gershon-dash-cron"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# No public route: this Worker only runs on its schedule.
+workers_dev = false
+
+[triggers]
+crons = ["15 12 * * 1"]
+
+# MUST be the SAME KV namespace as the dash Worker (binding BOARD), otherwise
+# the board never sees what this Worker writes. Copy the id from
+# apps/dash/wrangler.toml once Charles has filled it in.
+[[kv_namespaces]]
+binding = "BOARD"
+id = "REPLACE_WITH_LIVE_KV_NAMESPACE_ID"
+
+[observability]
+enabled = true
+
+# Secrets (set in the dashboard on THIS Worker too, never in this file) - the
+# same values as on the dash Worker, because this Worker does the collecting:
+# CLIENT_EMAIL, CLIENT_PASSWORD, SOCIAL_TOKEN, LINALYSIS_TOKEN, FINANCE_TOKEN, NEXASHARE_TOKEN
+# A missing secret is not an error: that platform shows "Not connected yet".
