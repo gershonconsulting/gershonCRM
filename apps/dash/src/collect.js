@@ -27,6 +27,26 @@ export function previousIsoWeek(now = new Date()) {
   return { week: isoWeekLabel(start), start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
+/** ISO week (Monday start) that contains `now`. Dates are UTC midnights. */
+export function currentIsoWeek(now = new Date()) {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dow = (d.getUTCDay() + 6) % 7;            // Mon=0
+  const start = new Date(d - dow * 86400000);
+  const end = new Date(start.getTime() + 6 * 86400000);
+  return { week: isoWeekLabel(start), start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
+
+/**
+ * v1.2: the board the site shows by default is the CURRENT ISO week's board.
+ * It is created every Monday by the gershon-dash-cron Worker (apps/dash-cron)
+ * and can be re-run to refresh it. Single switch: set to 'previous' to go back
+ * to v1.1 behaviour (board = the last completed week).
+ */
+export const BOARD_WEEK_MODE = 'current';
+export function boardWeek(now = new Date()) {
+  return BOARD_WEEK_MODE === 'previous' ? previousIsoWeek(now) : currentIsoWeek(now);
+}
+
 export function isoWeekLabel(date) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dow = (d.getUTCDay() + 6) % 7;
