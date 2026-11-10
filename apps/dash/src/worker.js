@@ -30,11 +30,41 @@ async function readIndex(env) {
   return (await env.BOARD.get('index', 'json')) || [];   // [{week, range}] newest first
 }
 
+/**
+ * Week list for the sidebar/home: every week stored in KV (the `index` key plus
+ * any `snap:<week>` key the index forgot), plus the current ISO week even when
+ * it is not built yet. Newest first; each entry has builtAt, or notBuilt: true.
+ */
+export async function listWeeks(env, now = new Date()) {
+  const byWeek = new Map((await readIndex(env)).map(w => [w.week, { ...w }]));
+  if (typeof env.BOARD.list === 'function') {
+    let cursor;
+    do {
+      const r = await env.BOARD.list({ prefix: 'snap:', cursor });
+      for (const k of r.keys || []) {
+        const wk = k.name.slice(5);
+        if (/^\d{4}-W\d{2}$/.test(wk) && !byWeek.has(wk)) byWeek.set(wk, { week: wk });
+      }
+      cursor = r.list_complete === false ? r.cursor : undefined;
+    } while (cursor);
+  }
+  const cur = boardWeek(now);
+  if (!byWeek.has(cur.week)) byWeek.set(cur.week, { week: cur.week, range: weekRange(cur), notBuilt: true });
+  for (const w of byWeek.values()) {
+    if (w.builtAt || w.notBuilt) continue;
+    const snap = await env.BOARD.get(`snap:${w.week}`, 'json');
+    if (!snap) { w.notBuilt = true; continue; }
+    if (snap.generatedAt) w.builtAt = snap.generatedAt;
+    if (!w.range) w.range = weekRange(snap);
+  }
+  return [...byWeek.values()].sort((a, b) => (a.week < b.week ? 1 : -1));
+}
+
 export async function generate(env, wk, deps) {
   const snap = await collectWeek(env, wk, deps);
   await env.BOARD.put(`snap:${wk.week}`, JSON.stringify(snap));
   const index = (await readIndex(env)).filter(w => w.week !== wk.week);
-  index.unshift({ week: wk.week, range: weekRange(snap) });
+  index.unshift({ week: wk.week, range: weekRange(snap), builtAt: snap.generatedAt });
   index.sort((a, b) => (a.week < b.week ? 1 : -1));
   await env.BOARD.put('index', JSON.stringify(index.slice(0, 104)));
   console.log(`[dash] stored ${wk.week} (${snap.platforms.filter(p => p.status === 'connected').length}/${snap.platforms.length} connected)`);
@@ -67,6 +97,7 @@ export default {
     const url = new URL(request.url);
     const now = new Date();
     const index = await readIndex(env);
+    const weeks = await listWeeks(env, now);
     ctx.waitUntil(selfHeal(env, index, now).catch(e => console.error('[dash] self-heal failed', e)));
 
     const isHome = url.pathname === '/' || url.pathname === '';
@@ -74,15 +105,15 @@ export default {
       // Landing page = the current week's board, never an older week.
       const wk = boardWeek(now);
       const snap = await env.BOARD.get(`snap:${wk.week}`, 'json');
-      if (!snap || !Array.isArray(snap.platforms)) return html(renderPreparing(wk, index, { latest: index[0] || null, now }));
-      return html(renderBoard(snap, index, now, { expectedWeek: wk.week }));
+      if (!snap || !Array.isArray(snap.platforms)) return html(renderPreparing(wk, weeks, { latest: weeks.find(w => !w.notBuilt) || null, now }));
+      return html(renderBoard(snap, weeks, now, { expectedWeek: wk.week }));
     }
     const m = url.pathname.match(/^\/w\/(\d{4}-W\d{2})\/?$/);
-    if (!m) return html(renderMissing(null, index), 404);
+    if (!m) return html(renderMissing(null, weeks), 404);
     const week = m[1];
     const snap = await env.BOARD.get(`snap:${week}`, 'json');
-    if (!snap || !Array.isArray(snap.platforms)) return html(renderMissing(week, index), 404);
-    return html(renderBoard(snap, index, now));
+    if (!snap || !Array.isArray(snap.platforms)) return html(renderMissing(week, weeks), 404);
+    return html(renderBoard(snap, weeks, now));
   },
 
   // Fallback only: apps/dash/wrangler.toml has no [triggers] since v1.2 (the
