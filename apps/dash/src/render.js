@@ -266,8 +266,15 @@ export function bannerState(snap, now = new Date(), expectedWeek = null) {
   return { ...f, tone, missing, why: why.trim() };
 }
 
+/** Per-week "built <date>" line for the week list (index entries carry builtAt). */
+export function builtLine(w) {
+  if (w.notBuilt) return '<small class="built">not built yet</small>';
+  if (w.builtAt) return `<small class="built">built ${esc(fmtDate(w.builtAt))}</small>`;
+  return '';
+}
+
 function sidebar(weeks, current) {
-  const items = (weeks || []).map(w => `<li><a class="${w.week === current ? 'on' : ''}" href="/w/${esc(w.week)}"${w.week === current ? ' aria-current="page"' : ''}>${esc(w.week)}${w.range ? `<small>${esc(w.range)}</small>` : ''}</a></li>`).join('');
+  const items = (weeks || []).map(w => `<li><a class="${w.week === current ? 'on' : ''}" href="/w/${esc(w.week)}"${w.week === current ? ' aria-current="page"' : ''}>${esc(w.week)}${w.range ? `<small>${esc(w.range)}</small>` : ''}${builtLine(w)}</a></li>`).join('');
   return `<nav class="side" aria-label="Weeks">
   <div class="brand"><span class="mark">D</span>Dash weekly board</div>
   <div class="lab">Weeks</div>
@@ -388,9 +395,9 @@ export function staleLine(latest, wk, now = new Date()) {
  * the latest board is and when the next one is built, with a link to it.
  */
 export function renderPreparing(wk, weeks, opts = {}) {
-  const { latest = (weeks || [])[0] || null, now = new Date(), ...pageOpts } = opts;
+  const { latest = (weeks || []).find(w => !w.notBuilt) || null, now = new Date(), ...pageOpts } = opts;
   const range = weekRange(wk);
-  const list = [{ week: wk.week, range }, ...(weeks || []).filter(w => w.week !== wk.week)];
+  const list = [{ week: wk.week, range, notBuilt: true }, ...(weeks || []).filter(w => w.week !== wk.week)];
   const st = staleLine(latest, wk, now);
   const link = latest && latest.week ? ` <a href="/w/${esc(latest.week)}">Open ${esc(latest.week)}</a>` : '';
   const inner = `<header><h1>Weekly Board · ${esc(wk.week)}</h1>
