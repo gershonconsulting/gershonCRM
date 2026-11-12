@@ -38,9 +38,9 @@ test('collector never leaks secret names into the snapshot; page never shows the
   assert.ok(!/HTTP \d{3}/.test(page));
 });
 
-test('empty figures say "No data" / "Not connected yet", not 0', () => {
+test('empty figures say "No data" / "not connected", not 0', () => {
   const page = renderBoard(sampleSnapshot, sampleWeeks, new Date('2026-10-23'));
-  assert.ok(page.includes('Not connected yet'));
+  assert.ok(page.includes('Client CRM not connected (sign-in details missing)'));
   assert.ok(page.includes('<span class="pill empty">No data</span>'));
   assert.ok(page.includes('Data source: finance.gershoncrm.com'));
   assert.equal(connectionLine(sampleSnapshot).text, 'Some platform connections are not set up yet (3 of 5)');
@@ -109,7 +109,7 @@ test('current ISO week (v1.2 board week)', () => {
   assert.equal(currentIsoWeek(new Date('2026-11-01T23:59:00Z')).week, '2026-W44');   // Sunday still W44
   assert.equal(currentIsoWeek(new Date('2027-01-01T10:00:00Z')).week, '2026-W53');
   assert.equal(boardWeek(new Date('2026-10-28T09:00:00Z')).week, '2026-W44');
-  assert.equal(VERSION, '1.2');
+  assert.equal(VERSION, '1.2.1');
 });
 
 test('landing page shows "being prepared" instead of an old week', async () => {
@@ -143,5 +143,5 @@ test('preparing page carries no secret names and is phone-safe markup', () => {
   const page = renderPreparing(currentIsoWeek(new Date('2026-10-28')), sampleWeeks);
   for (const s of SECRET_NAMES) assert.ok(!page.includes(s));
   assert.ok(page.includes('26 Oct – 1 Nov 2026'));
-  assert.ok(page.includes('Dash v1.2'));
+  assert.ok(page.includes('Dash v1.2.1'));
 });
