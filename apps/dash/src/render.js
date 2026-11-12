@@ -5,7 +5,9 @@
 // an HTTP status code or an internal error message. Those details go to
 // the Worker logs only (see collect.js). The page says "Not connected yet".
 
-export const VERSION = '1.2';
+import { PLATFORMS } from './collect.js';
+
+export const VERSION = '1.2.1';
 export const TOTAL_PLATFORMS = 5;
 export const STALE_AMBER_DAYS = 8;  // orange when older than this
 export const STALE_RED_DAYS = 15;   // red when older than this
@@ -51,14 +53,30 @@ export function platformState(p) {
 
 /** Headline counts, per PLATFORM. Empty figures are counted separately, never as 0. */
 export function summarise(snap) {
-  const s = { green: 0, amber: 0, red: 0, nodata: 0, empty: 0, connected: 0, notReady: 0, total: 0 };
+  const s = { green: 0, amber: 0, red: 0, nodata: 0, empty: 0, connected: 0, notReady: 0, total: 0, reporting: 0 };
   for (const p of snap.platforms || []) {
     s.total++;
     if (p.status === 'connected') s.connected++; else s.notReady++;
     s[platformState(p)]++;
     if (p.status === 'connected') for (const m of p.metrics || []) if (!hasValue(m)) s.empty++;
   }
+  s.reporting = s.green + s.amber + s.red;   // a platform with no data is never "reporting"
   return s;
+}
+
+/** Scoreboard headline: "2 of 5 platforms reporting" (reporting = sent at least one filled figure). */
+export function reportingLine(snap) {
+  const s = summarise(snap);
+  const total = s.total || TOTAL_PLATFORMS;
+  return { n: s.reporting, total, text: `${s.reporting} of ${total} platforms reporting` };
+}
+
+/** Readable reason for a platform that is not connected, e.g. "Finance not connected (token missing)". */
+export function notConnectedNote(p) {
+  const what = p.reason === 'signin_missing' ? 'sign-in details missing'
+    : p.reason === 'token_missing' ? 'token missing'
+    : (PLATFORMS.find(x => x.id === p.id) || {}).auth === 'login' ? 'sign-in details missing' : 'token missing';
+  return `${p.name || 'Platform'} not connected (${what})`;
 }
 
 export function connectionLine(snap) {
@@ -73,17 +91,11 @@ function platformDot(p) {
   return st === 'nodata' ? 'grey' : st;
 }
 
-const STATUS_WORDS = {
-  connected: 'Connected',
-  not_connected: 'Not connected yet',
-  unreachable: 'Not responding this week',
-};
-
 function sourceLine(p) {
   const where = esc(p.host || 'unknown source');
   if (p.status === 'connected') return `Data source: ${where} · ${esc(p.sourceNote || 'weekly figures')}`;
   if (p.status === 'unreachable') return `Data source: ${where} · could not be read this week`;
-  return `Data source: ${where} · not connected yet`;
+  return `Data source: ${where} · ${esc(notConnectedNote(p).replace(/^.*? not connected/, 'not connected'))}`;
 }
 
 function metricHtml(m) {
@@ -109,15 +121,18 @@ function tileHtml(p) {
   const dot = platformDot(p);
   const metrics = (p.metrics || []);
   const filled = metrics.filter(hasValue).length;
+  const reporting = platformState(p) !== 'nodata';
   const body = p.status === 'connected' && metrics.length
     ? `<div class="metrics">${metrics.map(metricHtml).join('')}</div>${tableHtml(p.table)}`
-    : `<div class="emptytile"><strong>Not connected yet</strong><span>${p.status === 'unreachable'
-        ? 'The platform did not answer when this week was generated. Figures will appear on the next run.'
-        : 'Figures will appear here once this platform is linked to the board.'}</span></div>`;
+    : `<div class="emptytile"><strong>No data</strong><span class="note">${p.status === 'unreachable'
+        ? 'Not responding this week. The platform did not answer when this week was generated; figures will appear on the next run.'
+        : p.status === 'connected'
+          ? 'The platform answered without any figures for this week.'
+          : `${esc(notConnectedNote(p))}. Figures will appear here once it is linked to the board.`}</span></div>`;
   return `<section class="tile" id="p-${esc(p.id)}">
   <header class="tilehead">
     <h3><span class="dot ${dot}"></span>${esc(p.name)}</h3>
-    <span class="status ${p.status === 'connected' ? 'on' : 'off'}">${STATUS_WORDS[p.status] || 'Not connected yet'}</span>
+    <span class="status ${reporting ? 'on' : 'off'}">${reporting ? 'Reporting' : 'No data'}</span>
   </header>
   <p class="src">${sourceLine(p)}${p.status === 'connected' ? ` · ${filled} of ${metrics.length} figures filled` : ''}</p>
   ${body}
@@ -144,7 +159,7 @@ export const CSS = `
 /* Layout: Linalysis shell - white 240px sidebar (weeks) + main column of 12px-radius white cards. */
 :root{
   --text:#1d1d1f; --muted:#6b6b70; --line:#e5e7eb; --bg:#f7f7f8; --card:#ffffff;
-  --brand:#CC3333; --brand-dark:#a8281f; --tint:#fdf2f2;
+  --brand:#FE1B04; --brand-dark:#d11200; --tint:#fff5f5;
   --g-bg:#e3f3e6; --g-fg:#11713a; --a-bg:#fdf0d5; --a-fg:#8a5300;
   --r-bg:#fbe2e0; --r-fg:#a3161b; --n-bg:#f0f0f2; --n-fg:#6b6b70;
   --font:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -161,7 +176,7 @@ export const CSS = `
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.5 var(--font);-webkit-text-size-adjust:100%}
-a{color:var(--brand)}
+a{color:var(--brand-dark)}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
 .shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
 .side{background:var(--card);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:18px}
@@ -228,7 +243,12 @@ tr:last-child td{border-bottom:none}
 .cell.red{background:var(--r-bg);color:var(--r-fg)}.cell.grey{background:var(--n-bg);color:var(--n-fg)}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
-.missing{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted)}
+.missing{background:var(--card);border:1px dashed var(--n-fg);border-radius:12px;padding:28px 18px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:6px;align-items:center}
+.missing strong{color:var(--text);font-size:17px}
+.missing p{margin:0;max-width:60ch}
+.score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:15px}
+.score b{font:600 22px/1 var(--mono);font-variant-numeric:tabular-nums}
+.score.none b{color:var(--n-fg)}
 @media (max-width:820px){
   .shell{grid-template-columns:minmax(0,1fr)}
   .side{border-right:0;border-bottom:1px solid var(--line);padding:12px 0;gap:8px}
@@ -295,8 +315,20 @@ export function weekRange(snap) {
 const SECRET_NAME_RE = /\b[A-Z][A-Z0-9]*_(?:TOKEN|PASSWORD|EMAIL|SECRET|KEY|API_KEY)\b/g;
 export const scrubSecrets = t => String(t).replace(SECRET_NAME_RE, '[hidden]');
 
+// "Missing secret(s): FINANCE_TOKEN" (raw error from the old live Worker) ->
+// "Finance not connected (token missing)". Runs before scrubSecrets.
+const MISSING_SECRET_RE = /missing secret\(?s?\)?\s*:?\s*([A-Z][A-Z0-9_]*(?:\s*,\s*[A-Z][A-Z0-9_]*)*)/gi;
+export function friendlyErrors(t) {
+  return String(t).replace(MISSING_SECRET_RE, (all, names) => {
+    const first = names.split(',')[0].trim();
+    const p = PLATFORMS.find(x => x.secrets.includes(first));
+    if (!p) return 'Not connected (token missing)';
+    return notConnectedNote({ id: p.id, name: p.name });
+  });
+}
+
 function page(title, inner0, weeks, current, { fragment = false, topBar = '' } = {}) {
-  const inner = scrubSecrets(inner0);
+  const inner = scrubSecrets(friendlyErrors(inner0));
   const fonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">`;
   const body = `${topBar}<div class="shell">${sidebar(weeks, current)}<main class="main"><div class="inner">${inner}</div></main></div>${FRESH_JS}`;
@@ -314,6 +346,7 @@ export function renderBoard(snap, weeks, now = new Date(), opts = {}) {
   const f = bannerState(snap, now, opts.expectedWeek);
   const s = summarise(snap);
   const conn = connectionLine(snap);
+  const rl = reportingLine(snap);
   const why = f.why;
   const inner = `
 <header>
@@ -324,9 +357,10 @@ export function renderBoard(snap, weeks, now = new Date(), opts = {}) {
   <span class="lead">Latest report: <b>${esc(snap.week)}</b> (${esc(weekRange(snap))}) · generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
   <span class="why">${esc(why)}</span>
 </div>
+<div class="score${rl.n ? '' : ' none'}" data-reporting="${rl.n}"><b>${rl.n} of ${rl.total}</b><span>platforms reporting</span></div>
 <div class="conn ${conn.ok ? 'ok' : 'off'}">${esc(conn.text)}</div>
 <div class="kpis">
-  ${kpi('On track', s.green, s.total, 'green', 'Platforms with every figure at or above target')}
+  ${kpi('On track', s.green, s.total, 'green', 'Reporting platforms with every figure at or above target')}
   ${kpi('Watch', s.amber, s.total, 'amber', 'Platforms with a figure slipping')}
   ${kpi('Action needed', s.red, s.total, 'red', 'Platforms with a figure below target')}
   ${kpi('No data', s.nodata, s.total, 'grey', 'Not connected, not responding, or no figures this week')}
@@ -346,9 +380,18 @@ ${emptyStateHtml(s)}
 
 /** Page for a week that has not been generated (visitors never trigger a run). */
 export function renderMissing(week, weeks, opts = {}) {
-  const inner = `<header><h1>Weekly Board${week ? ' · ' + esc(week) : ''}</h1></header>
-<div class="missing"><strong>This week has not been generated yet.</strong><br>The board refreshes automatically every Monday. Pick another week on the left.</div>`;
-  return page('Weekly Board · dash.gershoncrm.com', inner, weeks, week, opts);
+  if (!week) {
+    const inner = `<header><h1>Weekly Board</h1></header>
+<div class="missing" role="note"><strong>Page not found</strong><p>Pick a week in the list.</p></div>`;
+    return page('Not found · dash.gershoncrm.com', inner, weeks, null, opts);
+  }
+  const short = week.replace(/^\d{4}-/, '');
+  const mon = isoWeekMonday(week);
+  const range = mon ? weekRange({ start: mon.toISOString(), end: new Date(mon.getTime() + 6 * DAY).toISOString() }) : '';
+  const inner = `<header><h1>Weekly Board · ${esc(week)}</h1>${range ? `<p class="sub">${esc(range)}</p>` : ''}</header>
+<div class="missing" role="note"><strong>No data stored for ${esc(short)} yet</strong>
+<p>No board was saved for ${esc(week)}, so there are no figures to show (this is not a week with zero activity). Boards are built automatically every Monday; pick another week in the list.</p></div>`;
+  return page(`No data · ${week} · dash.gershoncrm.com`, inner, weeks, week, opts);
 }
 
 /** Monday (UTC midnight) of an ISO week label such as "2026-W42". */
