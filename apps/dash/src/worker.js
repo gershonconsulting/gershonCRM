@@ -53,7 +53,7 @@ export async function listWeeks(env, now = new Date()) {
   for (const w of byWeek.values()) {
     if (w.builtAt || w.notBuilt) continue;
     const snap = await env.BOARD.get(`snap:${w.week}`, 'json');
-    if (!snap) { w.notBuilt = true; continue; }
+    if (!snap || !Array.isArray(snap.platforms)) { w.notBuilt = true; continue; }   // placeholder = no data
     if (snap.generatedAt) w.builtAt = snap.generatedAt;
     if (!w.range) w.range = weekRange(snap);
   }
