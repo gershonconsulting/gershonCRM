@@ -62,7 +62,9 @@ async function collectOne(p, env, wk, fetchImpl) {
   const missing = p.secrets.filter(s => !env[s]);
   if (missing.length) {
     console.warn(`[dash] ${p.name}: not connected - missing secret(s): ${missing.join(', ')}`);
-    return { ...base, status: 'not_connected' };
+    // reason is a plain word, never the secret name: the page turns it into
+    // "Finance not connected (token missing)".
+    return { ...base, status: 'not_connected', reason: p.auth === 'login' ? 'signin_missing' : 'token_missing' };
   }
   const headers = { accept: 'application/json' };
   if (p.auth === 'bearer') headers.authorization = `Bearer ${env[p.secrets[0]]}`;
