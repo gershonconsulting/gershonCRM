@@ -5,7 +5,7 @@
 // an HTTP status code or an internal error message. Those details go to
 // the Worker logs only (see collect.js). The page says "Not connected yet".
 
-export const VERSION = '1.1';
+export const VERSION = '1.2';
 export const TOTAL_PLATFORMS = 5;
 export const STALE_AMBER_DAYS = 8;  // orange when older than this
 export const STALE_RED_DAYS = 15;   // red when older than this
@@ -311,7 +311,7 @@ export function renderBoard(snap, weeks, now = new Date(), opts = {}) {
   const inner = `
 <header>
   <h1>Weekly Board · ${esc(snap.week)}</h1>
-  <p class="sub">${esc(weekRange(snap))} · last week's activity across every platform (Monday to Sunday, Paris time)</p>
+  <p class="sub">${esc(weekRange(snap))} · the week's activity across every platform (Monday to Sunday, Paris time)</p>
 </header>
 <div class="fresh ${f.tone}" role="status" data-generated="${esc(new Date(snap.generatedAt).toISOString())}"${f.missing ? ` data-missing="${esc(f.missing)}"` : ''}>
   <span class="lead">Latest report: <b>${esc(snap.week)}</b> (${esc(weekRange(snap))}) · generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
@@ -332,7 +332,7 @@ ${emptyStateHtml(s)}
   <span><span class="dot amber"></span>Watch</span>
   <span><span class="dot red"></span>Action needed</span>
   <span><span class="dot"></span>No data</span>
-  <span>Counts are per platform. The banner turns orange after ${STALE_AMBER_DAYS} days or when last week is missing, and red after ${STALE_RED_DAYS} days.</span>
+  <span>Counts are per platform. The banner turns orange after ${STALE_AMBER_DAYS} days or when the expected week is missing, and red after ${STALE_RED_DAYS} days.</span>
 </div>`;
   return page(opts.title || `Weekly Board — ${snap.week} · dash.gershoncrm.com`, inner, weeks, snap.week, opts);
 }
@@ -340,6 +340,65 @@ ${emptyStateHtml(s)}
 /** Page for a week that has not been generated (visitors never trigger a run). */
 export function renderMissing(week, weeks, opts = {}) {
   const inner = `<header><h1>Weekly Board${week ? ' · ' + esc(week) : ''}</h1></header>
-<div class="missing"><strong>This week has not been generated yet.</strong><br>The board refreshes automatically every Monday morning. Pick another week on the left.</div>`;
+<div class="missing"><strong>This week has not been generated yet.</strong><br>The board refreshes automatically every Monday. Pick another week on the left.</div>`;
   return page('Weekly Board · dash.gershoncrm.com', inner, weeks, week, opts);
+}
+
+/** Monday (UTC midnight) of an ISO week label such as "2026-W42". */
+export function isoWeekMonday(label) {
+  const m = /^(\d{4})-W(\d{2})$/.exec(String(label || ''));
+  if (!m) return null;
+  const jan4 = new Date(Date.UTC(+m[1], 0, 4));
+  const w1 = jan4.getTime() - ((jan4.getUTCDay() + 6) % 7) * DAY;   // Monday of W01
+  return new Date(w1 + (+m[2] - 1) * 7 * DAY);
+}
+
+/** Whole ISO weeks between two week labels (b - a). */
+export function weeksBetween(a, b) {
+  const x = isoWeekMonday(a), y = isoWeekMonday(b);
+  return x && y ? Math.round((y - x) / (7 * DAY)) : null;
+}
+
+/** Next Monday-12:15-UTC build after `now` (the gershon-dash-cron schedule). */
+export function nextBuild(now = new Date()) {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 15));
+  let add = (8 - d.getUTCDay()) % 7;             // days until Monday
+  if (add === 0 && now >= d) add = 7;
+  return new Date(d.getTime() + add * DAY);
+}
+
+/**
+ * Stale line for the home page when the current week's board is missing:
+ * "Latest board: 2026-W42 (3 weeks old) — next board builds Monday 9 Nov".
+ * `latest` = the newest stored week {week, generatedAt?} or null.
+ */
+export function staleLine(latest, wk, now = new Date()) {
+  const nb = `next board builds Monday ${nextBuild(now).getUTCDate()} ${MONTHS[nextBuild(now).getUTCMonth()]}`;
+  if (!latest || !latest.week) return { tone: 'red', text: `No board has been built yet — ${nb}` };
+  const n = weeksBetween(latest.week, wk.week);
+  const age = n === null || n < 1 ? '' : n === 1 ? ' (1 week old)' : ` (${n} weeks old)`;
+  const tone = n !== null && n >= 2 ? 'red' : 'amber';
+  return { tone, text: `Latest board: ${latest.week}${age} — ${nb}` };
+}
+
+/**
+ * Home-page empty state (v1.2): the current week's board does not exist yet.
+ * Shown instead of an old week. `wk` = {week, start, end} of the current ISO week.
+ * opts.latest = newest stored week ({week, generatedAt}) -> says clearly how old
+ * the latest board is and when the next one is built, with a link to it.
+ */
+export function renderPreparing(wk, weeks, opts = {}) {
+  const { latest = (weeks || [])[0] || null, now = new Date(), ...pageOpts } = opts;
+  const range = weekRange(wk);
+  const list = [{ week: wk.week, range }, ...(weeks || []).filter(w => w.week !== wk.week)];
+  const st = staleLine(latest, wk, now);
+  const link = latest && latest.week ? ` <a href="/w/${esc(latest.week)}">Open ${esc(latest.week)}</a>` : '';
+  const inner = `<header><h1>Weekly Board · ${esc(wk.week)}</h1>
+  <p class="sub">${esc(range)} · the week's activity across every platform (Monday to Sunday, Paris time)</p></header>
+<div class="fresh ${st.tone} stale" role="status"><span class="lead">${esc(st.text)}</span>${link}</div>
+<div class="emptystate preparing" role="note">
+  <strong>This week's board is being prepared</strong>
+  <p>The board for ${esc(wk.week)} is created automatically every Monday (12:15 UTC). Until then, open the latest board with the link above; it is not this week's data. Earlier weeks are in the week list.</p>
+</div>`;
+  return page(`Weekly Board — ${wk.week} · dash.gershoncrm.com`, inner, list, wk.week, pageOpts);
 }
