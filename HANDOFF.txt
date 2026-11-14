@@ -252,3 +252,42 @@ DEPLOY STEPS  [not done - Charles (Cloudflare dashboard) / Ariel]
 6. Test once: gershon-dash-cron -> Triggers -> Cron -> run / or wait
    for Monday; then dash.gershoncrm.com must show the current week
    and the Logs show "[dash-cron] 2026-Wxx refreshed".
+
+================================================================
+2026-11-12 nightly  -  Dash v1.2.1: honest KPIs + empty weeks
+Branch: nightly/2026-11-12-dash-kpis  (PR into
+        nightly/2026-11-10-dash-index = PR #3, stacked on #2; NOT merged)
+================================================================
+AUDIT (live site, 12 Nov): home showed W45 with "0/5 platforms
+connected" yet "5 on track"; W43/W44/W46 answered 200 with a
+placeholder; W46 (current week) missing; raw "Missing secret
+FINANCE_TOKEN" text on the page. The live site still runs the old
+hand-uploaded Worker - none of PR #1-#3 or this branch is deployed.
+
+DONE  [ready to test: node --test apps/dash/test/*.test.mjs
+       apps/dash-cron/test/*.test.mjs -> 28/28 pass; preview:
+       node apps/dash/scripts/preview.mjs out.html --full]
+- KPI honesty: a platform with no data (not connected, not
+  responding, or only empty figures) shows a grey "No data" badge and
+  is never counted as "On track". Scoreboard headline "x of 5
+  platforms reporting" (reporting = sent at least one filled figure).
+- Empty week: /w/<week> with nothing stored (or a stored placeholder
+  without platforms) returns HTTP 404 with "No data stored for W43
+  yet" + the week's dates; no scoreboard. Placeholders count as "not
+  built yet" in the week list.
+- Missing secret: tiles say "Finance not connected (token missing)"
+  (Client CRM: "sign-in details missing"). The collector stores only
+  reason "token_missing", never the name. Old snapshots' raw "Missing
+  secret(s): X_TOKEN" text is rewritten to the same readable note.
+- Brand red #FE1B04 (dark #d11200, tint #fff5f5) replaces #CC3333.
+- Phone 390px checked with Playwright (3 scenarios): no horizontal
+  overflow (scrollWidth = 390). Week pills scroll sideways inside
+  their own row by design.
+- Version: Dash v1.2.1.
+
+STILL TO DO  [not done]
+- Merge #2 -> #3 -> this PR, then the deploy steps above (Charles):
+  deploy apps/dash + apps/dash-cron, set the platform tokens. Until
+  then the live page keeps the old "5 on track" / 200 placeholders.
+- W46 only appears once the Monday job (or one self-heal visit) runs
+  on the deployed code.
