@@ -7,7 +7,7 @@
 
 import { PLATFORMS } from './collect.js';
 
-export const VERSION = '1.2.1';
+export const VERSION = '1.2.2';
 export const TOTAL_PLATFORMS = 5;
 export const STALE_AMBER_DAYS = 8;  // orange when older than this
 export const STALE_RED_DAYS = 15;   // red when older than this

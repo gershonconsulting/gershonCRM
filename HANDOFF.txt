@@ -291,3 +291,22 @@ STILL TO DO  [not done]
   then the live page keeps the old "5 on track" / 200 placeholders.
 - W46 only appears once the Monday job (or one self-heal visit) runs
   on the deployed code.
+
+================================================================
+2026-11-15 nightly  -  Dash v1.2.2: /w/ index + /api/health
+Branch: nightly/2026-11-15-dash-w-index-health  (PR into main; NOT merged)
+================================================================
+DONE  [ready to test on preview: node --test apps/dash/test/*.test.mjs
+       -> 28/28 pass]
+- /w and /w/ (no week) no longer 404: they redirect (302) to the home
+  page, which already lists every stored week.
+- /api/health returns JSON {ok, app:"dash", version, latest_week}
+  (latest_week = newest BUILT week, null if none; 503 + ok:false if the
+  KV read fails). Never starts a build.
+- Version: Dash v1.2.2.
+
+STILL TO DO  [not done]
+- Not deployed: the live dash.gershoncrm.com is still the hand-uploaded
+  bundle, so /w/ and /api/health keep 404ing there until the merged
+  apps/dash is deployed (Charles). Check after deploy:
+  dash.gershoncrm.com/api/health and dash.gershoncrm.com/w/.

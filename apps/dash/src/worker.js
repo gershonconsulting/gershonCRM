@@ -11,8 +11,10 @@
 //   3. self-heal: if the current week is missing, the first visit kicks off ONE
 //      background refresh (at most every 6 h).
 // Visitors can no longer create arbitrary weeks by typing /w/<week>.
+// v1.2.2: /w and /w/ (no week) redirect to the home page, which lists every
+// stored week; /api/health answers a small JSON status for uptime checks.
 
-import { renderBoard, renderMissing, renderPreparing, weekRange } from './render.js';
+import { renderBoard, renderMissing, renderPreparing, weekRange, VERSION } from './render.js';
 import { collectWeek, boardWeek } from './collect.js';
 
 const SECURITY_HEADERS = {
@@ -25,6 +27,7 @@ const SECURITY_HEADERS = {
 };
 
 const html = (body, status = 200) => new Response(body, { status, headers: SECURITY_HEADERS });
+const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { ...SECURITY_HEADERS, 'content-type': 'application/json; charset=utf-8' } });
 
 async function readIndex(env) {
   return (await env.BOARD.get('index', 'json')) || [];   // [{week, range}] newest first
@@ -91,11 +94,34 @@ async function selfHeal(env, index, now = new Date()) {
   await refreshBoard(env, now);
 }
 
+/** /api/health body: {ok, app, version, latest_week}. latest_week = newest BUILT week, or null. Never triggers a build. */
+export async function health(env, now = new Date()) {
+  try {
+    const weeks = await listWeeks(env, now);
+    const latest = weeks.find(w => !w.notBuilt);
+    return { status: 200, body: { ok: true, app: 'dash', version: VERSION, latest_week: latest ? latest.week : null } };
+  } catch (e) {
+    console.error('[dash] health check failed', e && e.message);
+    return { status: 503, body: { ok: false, app: 'dash', version: VERSION, latest_week: null } };
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
     const url = new URL(request.url);
     const now = new Date();
+
+    // Lightweight routes first: no self-heal, no page rendering.
+    if (url.pathname === '/api/health' || url.pathname === '/api/health/') {
+      const h = await health(env, now);
+      return json(h.body, h.status);
+    }
+    if (url.pathname === '/w' || url.pathname === '/w/') {
+      // No week given: the home page already lists every stored week.
+      return new Response(null, { status: 302, headers: { location: '/', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' } });
+    }
+
     const index = await readIndex(env);
     const weeks = await listWeeks(env, now);
     ctx.waitUntil(selfHeal(env, index, now).catch(e => console.error('[dash] self-heal failed', e)));
