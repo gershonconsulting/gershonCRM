@@ -3,9 +3,9 @@ Updated: 2026-11-16 (nightly)
 
 ## State
 - main = Dash v1.2.2 (PR #2 cron Worker, #3 every stored week listed, #4 honest KPIs, #5 /api/health).
-- Open PR nightly/2026-11-16-dash-kv = Dash v1.2.3 (KV read from DASH_KV or BOARD).
+- Open PR nightly/2026-11-16-dash-kv = Dash v1.2.3 (KV read from DASH_KV or BOARD; week list never links to dead "/w/": index rows without a valid ISO week are ignored; bare /w/ redirects to /).
 - Version: single constant VERSION in apps/dash/src/render.js (1.2.3 on the open PR).
-- Tests: node --test apps/dash/test/*.test.mjs apps/dash-cron/test/*.test.mjs -> 37/37 pass on the v1.2.3 branch (32/32 on main).
+- Tests: node --test apps/dash/test/*.test.mjs apps/dash-cron/test/*.test.mjs -> 39/39 pass on the v1.2.3 branch (32/32 on main).
 
 ## Deploy route
 - dash.gershoncrm.com = Cloudflare Pages project `gershon-dash`, deployed by ZIP upload (not Git-connected).
@@ -19,7 +19,7 @@ Updated: 2026-11-16 (nightly)
 - [x] Deploy zip built + smoke-tested locally (night/out/gershon-dash-deploy.zip).
 
 ## Open
-- [ ] Build the bundle from main (after the v1.2.3 PR) and upload it to Pages project gershon-dash. Live is still v1.2.1.
+- [ ] Build the bundle from main (after the v1.2.3 PR) and upload it to Pages project gershon-dash. Live is still v1.2.1 (its week list still shows the dead "/w/" link and /w/ 404s until then).
 - [ ] Deploy apps/dash-cron over gershon-dash-cron; same KV id; platform secrets (see HANDOFF.txt).
 - [ ] Platform tokens (SOCIAL/LINALYSIS/FINANCE/NEXASHARE_TOKEN, CLIENT_EMAIL/PASSWORD) so tiles show data.
 - [ ] No login on the board (Olivier's decision); optional Cloudflare Access.
