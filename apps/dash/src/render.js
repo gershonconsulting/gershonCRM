@@ -7,7 +7,7 @@
 
 import { PLATFORMS } from './collect.js';
 
-export const VERSION = '1.2.2';
+export const VERSION = '1.2.3';
 export const TOTAL_PLATFORMS = 5;
 export const STALE_AMBER_DAYS = 8;  // orange when older than this
 export const STALE_RED_DAYS = 15;   // red when older than this
@@ -83,7 +83,8 @@ export function connectionLine(snap) {
   const s = summarise(snap);
   const total = (snap.platforms || []).length || TOTAL_PLATFORMS;
   if (s.notReady === 0) return { ok: true, text: `All ${total} platforms are connected` };
-  return { ok: false, text: `Some platform connections are not set up yet (${s.notReady} of ${total})` };
+  // v1.2.3: was "Some platform connections are not set up yet (5 of 5)" - "Some" read wrong when none were.
+  return { ok: false, text: `${s.notReady} of ${total} platforms not connected yet` };
 }
 
 function platformDot(p) {
@@ -354,7 +355,7 @@ export function renderBoard(snap, weeks, now = new Date(), opts = {}) {
   <p class="sub">${esc(weekRange(snap))} · the week's activity across every platform (Monday to Sunday, Paris time)</p>
 </header>
 <div class="fresh ${f.tone}" role="status" data-generated="${esc(new Date(snap.generatedAt).toISOString())}"${f.missing ? ` data-missing="${esc(f.missing)}"` : ''}>
-  <span class="lead">Latest report: <b>${esc(snap.week)}</b> (${esc(weekRange(snap))}) · generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
+  <span class="lead">${opts.expectedWeek ? 'Latest report' : 'Report'}: <b>${esc(snap.week)}</b> (${esc(weekRange(snap))}) · generated ${esc(fmtDate(snap.generatedAt))} · <span class="age">${esc(f.text.split(' · ')[1])}</span></span>
   <span class="why">${esc(why)}</span>
 </div>
 <div class="score${rl.n ? '' : ' none'}" data-reporting="${rl.n}"><b>${rl.n} of ${rl.total}</b><span>platforms reporting</span></div>
