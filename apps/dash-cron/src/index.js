@@ -6,11 +6,11 @@
 // come only from the five platforms; a platform that does not answer or has no
 // secret is stored as "not connected" / "not responding".
 
-import { refreshBoard } from '../../dash/src/worker.js';
+import { refreshBoard, boardKV } from '../../dash/src/worker.js';
 
 export async function run(env, scheduledTime = Date.now(), deps) {
   const now = new Date(scheduledTime);
-  if (!env.BOARD) throw new Error('KV binding BOARD is missing (see apps/dash-cron/wrangler.toml)');
+  boardKV(env);   // throws if neither DASH_KV nor BOARD is bound (see apps/dash-cron/wrangler.toml)
   const snap = await refreshBoard(env, now, deps);
   console.log(`[dash-cron] ${snap.week} refreshed at ${snap.generatedAt}`);
   return snap;
