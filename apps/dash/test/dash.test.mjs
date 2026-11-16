@@ -34,7 +34,7 @@ test('collector never leaks secret names into the snapshot; page never shows the
     assert.ok(!page.includes(s), `page contains ${s}`);
   }
   assert.ok(logs.join('\n').includes('LINALYSIS_TOKEN'), 'detail should still go to the Worker logs');
-  assert.ok(page.includes('Some platform connections are not set up yet (5 of 5)'));
+  assert.ok(page.includes('5 of 5 platforms not connected yet'));
   assert.ok(!/HTTP \d{3}/.test(page));
 });
 
@@ -43,7 +43,7 @@ test('empty figures say "No data" / "not connected", not 0', () => {
   assert.ok(page.includes('Client CRM not connected (sign-in details missing)'));
   assert.ok(page.includes('<span class="pill empty">No data</span>'));
   assert.ok(page.includes('Data source: finance.gershoncrm.com'));
-  assert.equal(connectionLine(sampleSnapshot).text, 'Some platform connections are not set up yet (3 of 5)');
+  assert.equal(connectionLine(sampleSnapshot).text, '3 of 5 platforms not connected yet');
 });
 
 function memKV(init = {}) {
@@ -109,7 +109,7 @@ test('current ISO week (v1.2 board week)', () => {
   assert.equal(currentIsoWeek(new Date('2026-11-01T23:59:00Z')).week, '2026-W44');   // Sunday still W44
   assert.equal(currentIsoWeek(new Date('2027-01-01T10:00:00Z')).week, '2026-W53');
   assert.equal(boardWeek(new Date('2026-10-28T09:00:00Z')).week, '2026-W44');
-  assert.equal(VERSION, '1.2.2');
+  assert.equal(VERSION, '1.2.3');
 });
 
 test('landing page shows "being prepared" instead of an old week', async () => {
@@ -143,5 +143,5 @@ test('preparing page carries no secret names and is phone-safe markup', () => {
   const page = renderPreparing(currentIsoWeek(new Date('2026-10-28')), sampleWeeks);
   for (const s of SECRET_NAMES) assert.ok(!page.includes(s));
   assert.ok(page.includes('26 Oct – 1 Nov 2026'));
-  assert.ok(page.includes('Dash v1.2.2'));
+  assert.ok(page.includes('Dash v1.2.3'));
 });
