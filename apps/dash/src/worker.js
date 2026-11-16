@@ -15,6 +15,8 @@
 // stored week; /api/health answers a small JSON status for uptime checks.
 // v1.2.3: the KV namespace is read from env.DASH_KV (the name the live Pages
 // project gershon-dash binds) or env.BOARD (wrangler.toml / older setups).
+// v1.2.3: index rows without a valid week are ignored, so the week list never
+// links to "/w/" (404); a bare /w/ still redirects to the home page.
 
 import { renderBoard, renderMissing, renderPreparing, weekRange, VERSION } from './render.js';
 import { collectWeek, boardWeek } from './collect.js';
@@ -42,8 +44,13 @@ export function boardKV(env) {
   return kv;
 }
 
+const WEEK_RE = /^\d{4}-W\d{2}$/;
+
 async function readIndex(env) {
-  return (await boardKV(env).get('index', 'json')) || [];   // [{week, range}] newest first
+  // [{week, range}] newest first. v1.2.3: an entry without a valid ISO week (a legacy/partial
+  // row) is dropped; it used to render a sidebar link to "/w/" (a dead link) on the live board.
+  const index = (await boardKV(env).get('index', 'json')) || [];
+  return Array.isArray(index) ? index.filter(w => w && typeof w.week === 'string' && WEEK_RE.test(w.week)) : [];
 }
 
 /**
@@ -59,7 +66,7 @@ export async function listWeeks(env, now = new Date()) {
       const r = await boardKV(env).list({ prefix: 'snap:', cursor });
       for (const k of r.keys || []) {
         const wk = k.name.slice(5);
-        if (/^\d{4}-W\d{2}$/.test(wk) && !byWeek.has(wk)) byWeek.set(wk, { week: wk });
+        if (WEEK_RE.test(wk) && !byWeek.has(wk)) byWeek.set(wk, { week: wk });
       }
       cursor = r.list_complete === false ? r.cursor : undefined;
     } while (cursor);
