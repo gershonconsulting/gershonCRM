@@ -13,6 +13,10 @@
 // Visitors can no longer create arbitrary weeks by typing /w/<week>.
 // v1.2.2: /w and /w/ (no week) redirect to the home page, which lists every
 // stored week; /api/health answers a small JSON status for uptime checks.
+// v1.2.3: the KV namespace is read from env.DASH_KV (the name the live Pages
+// project gershon-dash binds) or env.BOARD (wrangler.toml / older setups).
+// v1.2.3: index rows without a valid week are ignored, so the week list never
+// links to "/w/" (404); a bare /w/ still redirects to the home page.
 
 import { renderBoard, renderMissing, renderPreparing, weekRange, VERSION } from './render.js';
 import { collectWeek, boardWeek } from './collect.js';
@@ -29,8 +33,24 @@ const SECURITY_HEADERS = {
 const html = (body, status = 200) => new Response(body, { status, headers: SECURITY_HEADERS });
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { ...SECURITY_HEADERS, 'content-type': 'application/json; charset=utf-8' } });
 
+/**
+ * The board's KV namespace. The live Pages project binds it as DASH_KV; the
+ * wrangler.toml files (and older setups) bind it as BOARD. Either works;
+ * DASH_KV wins if both are set (they point at the same namespace).
+ */
+export function boardKV(env) {
+  const kv = env && (env.DASH_KV || env.BOARD);
+  if (!kv) throw new Error('KV binding missing: bind the "gershon-dash" namespace as DASH_KV (or BOARD)');
+  return kv;
+}
+
+const WEEK_RE = /^\d{4}-W\d{2}$/;
+
 async function readIndex(env) {
-  return (await env.BOARD.get('index', 'json')) || [];   // [{week, range}] newest first
+  // [{week, range}] newest first. v1.2.3: an entry without a valid ISO week (a legacy/partial
+  // row) is dropped; it used to render a sidebar link to "/w/" (a dead link) on the live board.
+  const index = (await boardKV(env).get('index', 'json')) || [];
+  return Array.isArray(index) ? index.filter(w => w && typeof w.week === 'string' && WEEK_RE.test(w.week)) : [];
 }
 
 /**
@@ -40,13 +60,13 @@ async function readIndex(env) {
  */
 export async function listWeeks(env, now = new Date()) {
   const byWeek = new Map((await readIndex(env)).map(w => [w.week, { ...w }]));
-  if (typeof env.BOARD.list === 'function') {
+  if (typeof boardKV(env).list === 'function') {
     let cursor;
     do {
-      const r = await env.BOARD.list({ prefix: 'snap:', cursor });
+      const r = await boardKV(env).list({ prefix: 'snap:', cursor });
       for (const k of r.keys || []) {
         const wk = k.name.slice(5);
-        if (/^\d{4}-W\d{2}$/.test(wk) && !byWeek.has(wk)) byWeek.set(wk, { week: wk });
+        if (WEEK_RE.test(wk) && !byWeek.has(wk)) byWeek.set(wk, { week: wk });
       }
       cursor = r.list_complete === false ? r.cursor : undefined;
     } while (cursor);
@@ -55,7 +75,7 @@ export async function listWeeks(env, now = new Date()) {
   if (!byWeek.has(cur.week)) byWeek.set(cur.week, { week: cur.week, range: weekRange(cur), notBuilt: true });
   for (const w of byWeek.values()) {
     if (w.builtAt || w.notBuilt) continue;
-    const snap = await env.BOARD.get(`snap:${w.week}`, 'json');
+    const snap = await boardKV(env).get(`snap:${w.week}`, 'json');
     if (!snap || !Array.isArray(snap.platforms)) { w.notBuilt = true; continue; }   // placeholder = no data
     if (snap.generatedAt) w.builtAt = snap.generatedAt;
     if (!w.range) w.range = weekRange(snap);
@@ -65,11 +85,11 @@ export async function listWeeks(env, now = new Date()) {
 
 export async function generate(env, wk, deps) {
   const snap = await collectWeek(env, wk, deps);
-  await env.BOARD.put(`snap:${wk.week}`, JSON.stringify(snap));
+  await boardKV(env).put(`snap:${wk.week}`, JSON.stringify(snap));
   const index = (await readIndex(env)).filter(w => w.week !== wk.week);
   index.unshift({ week: wk.week, range: weekRange(snap), builtAt: snap.generatedAt });
   index.sort((a, b) => (a.week < b.week ? 1 : -1));
-  await env.BOARD.put('index', JSON.stringify(index.slice(0, 104)));
+  await boardKV(env).put('index', JSON.stringify(index.slice(0, 104)));
   console.log(`[dash] stored ${wk.week} (${snap.platforms.filter(p => p.status === 'connected').length}/${snap.platforms.length} connected)`);
   return snap;
 }
@@ -81,15 +101,15 @@ export async function generate(env, wk, deps) {
 export async function refreshBoard(env, now = new Date(), deps) {
   const wk = boardWeek(now);
   const snap = await generate(env, wk, deps);
-  await env.BOARD.put('last-refresh', JSON.stringify({ week: wk.week, at: new Date().toISOString() }));
+  await boardKV(env).put('last-refresh', JSON.stringify({ week: wk.week, at: new Date().toISOString() }));
   return snap;
 }
 
 async function selfHeal(env, index, now = new Date()) {
   const want = boardWeek(now).week;
   if (index.some(w => w.week === want)) return;
-  if (await env.BOARD.get('refresh-lock')) return;
-  await env.BOARD.put('refresh-lock', now.toISOString(), { expirationTtl: 6 * 3600 });
+  if (await boardKV(env).get('refresh-lock')) return;
+  await boardKV(env).put('refresh-lock', now.toISOString(), { expirationTtl: 6 * 3600 });
   console.warn(`[dash] ${want} not stored yet (newest: ${index[0] ? index[0].week : 'none'}): self-healing`);
   await refreshBoard(env, now);
 }
@@ -130,14 +150,14 @@ export default {
     if (isHome) {
       // Landing page = the current week's board, never an older week.
       const wk = boardWeek(now);
-      const snap = await env.BOARD.get(`snap:${wk.week}`, 'json');
+      const snap = await boardKV(env).get(`snap:${wk.week}`, 'json');
       if (!snap || !Array.isArray(snap.platforms)) return html(renderPreparing(wk, weeks, { latest: weeks.find(w => !w.notBuilt) || null, now }));
       return html(renderBoard(snap, weeks, now, { expectedWeek: wk.week }));
     }
     const m = url.pathname.match(/^\/w\/(\d{4}-W\d{2})\/?$/);
     if (!m) return html(renderMissing(null, weeks), 404);
     const week = m[1];
-    const snap = await env.BOARD.get(`snap:${week}`, 'json');
+    const snap = await boardKV(env).get(`snap:${week}`, 'json');
     if (!snap || !Array.isArray(snap.platforms)) return html(renderMissing(week, weeks), 404);
     return html(renderBoard(snap, weeks, now));
   },

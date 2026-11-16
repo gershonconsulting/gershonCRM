@@ -310,3 +310,43 @@ STILL TO DO  [not done]
   bundle, so /w/ and /api/health keep 404ing there until the merged
   apps/dash is deployed (Charles). Check after deploy:
   dash.gershoncrm.com/api/health and dash.gershoncrm.com/w/.
+
+================================================================
+2026-11-16 nightly  -  Dash v1.2.3: read KV from DASH_KV or BOARD
+Branch: nightly/2026-11-16-dash-kv  (PR into main; NOT merged)
+================================================================
+WHY: the live Pages project gershon-dash binds the KV namespace as
+DASH_KV, but the code only read env.BOARD, so a straight build of
+main would never load a stored board (live = v1.2.1 bundle).
+
+✅ READY TO TEST  [node --test apps/dash/test/*.test.mjs
+       apps/dash-cron/test/*.test.mjs -> 39/39 pass]
+- One helper boardKV(env) in apps/dash/src/worker.js returns
+  env.DASH_KV || env.BOARD; every KV read/write (index, snap:<week>,
+  list, last-refresh, refresh-lock) goes through it. The cron Worker
+  (apps/dash-cron) checks the same helper. Neither bound -> clear
+  error naming both; /api/health answers 503 as before.
+- No bundle alias needed any more: an esbuild bundle of
+  apps/dash/src/worker.js answers /api/health 200 with only DASH_KV.
+- wrangler.toml files unchanged (binding BOARD still works).
+- New test apps/dash/test/kv-binding.test.mjs runs with ONLY DASH_KV
+  bound: home, /w/<week>, week list, /api/health, self-heal, cron.
+- Wording: "Some platform connections are not set up yet (5 of 5)"
+  -> "5 of 5 platforms not connected yet"; an archived week's banner
+  says "Report: W42" (only the home page says "Latest report").
+- Version: Dash v1.2.3.
+- Extra fix (same PR): the live week list showed a nav link to "/w/"
+  (404). Cause: an index row with no valid week made the sidebar render
+  href="/w/". readIndex() in apps/dash/src/worker.js now drops index rows
+  without a YYYY-Www week, so the list only links to real weeks; a bare
+  /w/ already redirects to / (v1.2.2). New test
+  apps/dash/test/nav-links.test.mjs (fails on the old worker.js).
+  The live board is still v1.2.1, so the dead link stays until deploy.
+
+❌ STILL TO DO  [not done]
+- Someone must build the bundle from merged main and upload it to the
+  Pages project gershon-dash (Charles). Check after deploy:
+  dash.gershoncrm.com/api/health shows version 1.2.3 and a
+  latest_week, and the home page shows the stored board.
+- Unchanged from before: platform tokens + the gershon-dash-cron
+  Worker deploy.
