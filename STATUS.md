@@ -2,9 +2,9 @@
 Updated: 2026-11-16 (nightly)
 
 ## State
-- main = Dash v1.2.2 (PR #2 cron Worker, #3 every stored week listed, #4 honest KPIs, #5 /api/health).
-- Open PR nightly/2026-11-16-dash-kv = Dash v1.2.3 (KV read from DASH_KV or BOARD; week list never links to dead "/w/": index rows without a valid ISO week are ignored; bare /w/ redirects to /).
-- Version: single constant VERSION in apps/dash/src/render.js (1.2.3 on the open PR).
+- main = Dash v1.2.3 (PR #6 merged 2026-11-16; earlier: #2 cron Worker, #3 every stored week listed, #4 honest KPIs, #5 /api/health).
+- v1.2.3 (PR #6, merged 2026-11-16, NOT live: live is still v1.2.1 until the Pages zip upload) = (KV read from DASH_KV or BOARD; week list never links to dead "/w/": index rows without a valid ISO week are ignored; bare /w/ redirects to /).
+- Version: single constant VERSION in apps/dash/src/render.js (1.2.3 on main).
 - Tests: node --test apps/dash/test/*.test.mjs apps/dash-cron/test/*.test.mjs -> 39/39 pass on the v1.2.3 branch (32/32 on main).
 
 ## Deploy route
