@@ -1,10 +1,10 @@
 # STATUS - gershonCRM (Dash weekly board lives in apps/dash + apps/dash-cron)
-Updated: 2026-11-16 (v1.2.3 deployed)
+Updated: 2026-11-19 (v1.2.4 on main, live still 1.2.3)
 
 ## State
-- main = Dash v1.2.3 (PR #6 merged 2026-11-16; earlier: #2 cron Worker, #3 every stored week listed, #4 honest KPIs, #5 /api/health).
+- main = Dash v1.2.4 (2026-11-19 naming PR); v1.2.3 = PR #6 (merged 2026-11-16; earlier: #2 cron Worker, #3 every stored week listed, #4 honest KPIs, #5 /api/health).
 - v1.2.3 (PR #6, merged 2026-11-16) is LIVE on dash.gershoncrm.com since 2026-11-16 13:09 UTC (Pages deployment 85e6f8cb, direct upload; _worker.js sha256 5ac07140..., 34394 bytes) = (KV read from DASH_KV or BOARD; week list never links to dead "/w/": index rows without a valid ISO week are ignored; bare /w/ redirects to /).
-- Version: single constant VERSION in apps/dash/src/render.js (1.2.3 on main).
+- Version: single constant VERSION in apps/dash/src/render.js (1.2.4 on main).
 - Tests: node --test apps/dash/test/*.test.mjs apps/dash-cron/test/*.test.mjs -> 39/39 pass on main (723f836).
 
 ## Deploy route
@@ -15,10 +15,12 @@ Updated: 2026-11-16 (v1.2.3 deployed)
 - Monday cron: separate Worker gershon-dash-cron (apps/dash-cron, "15 12 * * 1"), deployed with wrangler.
 
 ## Done
+- [x] 2026-11-19 v1.2.4: naming "Dash by Gershon.AI" (titles, sidebar wordmark, version line); "Weekly Board" kept as page heading. Needs the ZIP upload to go live.
 - [x] v1.2 cron + current-week home, v1.2.1 KPIs/404 empty weeks/brand red #FE1B04 merged to main.
 - [x] Deploy zip built + smoke-tested locally (night/out/gershon-dash-deploy.zip).
 
 ## Open
+- [ ] Build the v1.2.4 bundle from main and upload it to gershon-dash (then /api/health = 1.2.4).
 - [x] v1.2.3 bundle built from main 723f836 and uploaded to gershon-dash (deployment 85e6f8cb, 2026-11-16). /api/health = 1.2.3, latest_week 2026-W47; /w/ -> 302 /. Rollback target: 83c28892 (v1.2.1).
 - [ ] Deploy apps/dash-cron over gershon-dash-cron; same KV id; platform secrets (see HANDOFF.txt).
 - [ ] Platform tokens (SOCIAL/LINALYSIS/FINANCE/NEXASHARE_TOKEN, CLIENT_EMAIL/PASSWORD) so tiles show data.
