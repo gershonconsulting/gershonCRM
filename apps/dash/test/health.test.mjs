@@ -22,7 +22,7 @@ test('/api/health returns {ok, app, version, latest_week} as JSON and does not s
   assert.match(r.headers.get('content-type'), /^application\/json/);
   assert.equal(r.headers.get('cache-control'), 'no-store');
   assert.deepEqual(await r.json(), { ok: true, app: 'dash', version: VERSION, latest_week: '2026-W45' });
-  assert.equal(VERSION, '1.2.3');
+  assert.equal(VERSION, '1.2.4');
   assert.equal(waits.length, 0, 'health must not start a background build');
   assert.ok(!BOARD.m.has('refresh-lock'));
   assert.equal((await get(BOARD, '/api/health/')).status, 200);
@@ -32,7 +32,7 @@ test('/api/health returns {ok, app, version, latest_week} as JSON and does not s
 test('/api/health with nothing stored: ok, latest_week null (current unbuilt week is not "latest")', async () => {
   const r = await get(memKV(), '/api/health');
   assert.equal(r.status, 200);
-  assert.deepEqual(await r.json(), { ok: true, app: 'dash', version: '1.2.3', latest_week: null });
+  assert.deepEqual(await r.json(), { ok: true, app: 'dash', version: '1.2.4', latest_week: null });
 });
 
 test('/api/health reports 503 {ok:false} when KV fails', async () => {

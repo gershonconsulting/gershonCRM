@@ -7,7 +7,7 @@
 
 import { PLATFORMS } from './collect.js';
 
-export const VERSION = '1.2.3';
+export const VERSION = '1.2.4';
 export const TOTAL_PLATFORMS = 5;
 export const STALE_AMBER_DAYS = 8;  // orange when older than this
 export const STALE_RED_DAYS = 15;   // red when older than this
@@ -297,10 +297,10 @@ export function builtLine(w) {
 function sidebar(weeks, current) {
   const items = (weeks || []).map(w => `<li><a class="${w.week === current ? 'on' : ''}" href="/w/${esc(w.week)}"${w.week === current ? ' aria-current="page"' : ''}>${esc(w.week)}${w.range ? `<small>${esc(w.range)}</small>` : ''}${builtLine(w)}</a></li>`).join('');
   return `<nav class="side" aria-label="Weeks">
-  <div class="brand"><span class="mark">D</span>Dash weekly board</div>
+  <div class="brand"><span class="mark">D</span>Dash by Gershon.AI</div>
   <div class="lab">Weeks</div>
   <ul class="weeks">${items}</ul>
-  <div class="ver">Dash v${VERSION}</div>
+  <div class="ver">Dash by Gershon.AI · v${VERSION}</div>
 </nav>`;
 }
 
@@ -376,7 +376,7 @@ ${emptyStateHtml(s)}
   <span><span class="dot"></span>No data</span>
   <span>Counts are per platform. The banner turns orange after ${STALE_AMBER_DAYS} days or when the expected week is missing, and red after ${STALE_RED_DAYS} days.</span>
 </div>`;
-  return page(opts.title || `Weekly Board — ${snap.week} · dash.gershoncrm.com`, inner, weeks, snap.week, opts);
+  return page(opts.title || `Dash by Gershon.AI — Weekly Board ${snap.week}`, inner, weeks, snap.week, opts);
 }
 
 /** Page for a week that has not been generated (visitors never trigger a run). */
@@ -384,7 +384,7 @@ export function renderMissing(week, weeks, opts = {}) {
   if (!week) {
     const inner = `<header><h1>Weekly Board</h1></header>
 <div class="missing" role="note"><strong>Page not found</strong><p>Pick a week in the list.</p></div>`;
-    return page('Not found · dash.gershoncrm.com', inner, weeks, null, opts);
+    return page('Not found · Dash by Gershon.AI', inner, weeks, null, opts);
   }
   const short = week.replace(/^\d{4}-/, '');
   const mon = isoWeekMonday(week);
@@ -392,7 +392,7 @@ export function renderMissing(week, weeks, opts = {}) {
   const inner = `<header><h1>Weekly Board · ${esc(week)}</h1>${range ? `<p class="sub">${esc(range)}</p>` : ''}</header>
 <div class="missing" role="note"><strong>No data stored for ${esc(short)} yet</strong>
 <p>No board was saved for ${esc(week)}, so there are no figures to show (this is not a week with zero activity). Boards are built automatically every Monday; pick another week in the list.</p></div>`;
-  return page(`No data · ${week} · dash.gershoncrm.com`, inner, weeks, week, opts);
+  return page(`No data · ${week} · Dash by Gershon.AI`, inner, weeks, week, opts);
 }
 
 /** Monday (UTC midnight) of an ISO week label such as "2026-W42". */
@@ -451,5 +451,5 @@ export function renderPreparing(wk, weeks, opts = {}) {
   <strong>This week's board is being prepared</strong>
   <p>The board for ${esc(wk.week)} is created automatically every Monday (12:15 UTC). Until then, open the latest board with the link above; it is not this week's data. Earlier weeks are in the week list.</p>
 </div>`;
-  return page(`Weekly Board — ${wk.week} · dash.gershoncrm.com`, inner, list, wk.week, pageOpts);
+  return page(`Dash by Gershon.AI — Weekly Board ${wk.week}`, inner, list, wk.week, pageOpts);
 }
